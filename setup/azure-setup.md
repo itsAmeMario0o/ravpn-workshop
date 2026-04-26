@@ -1,12 +1,14 @@
 # Azure setup
 
-Subscription, region, quota, and marketplace terms.
+Two things to settle before Terraform runs: pick a region with the right capacity, and accept the marketplace terms for the Cisco images. Both are quick. Both will block the deploy if you skip them.
 
-## Region
+## Pick a region
 
-Pick a region with availability for Dsv3 and Dsv4 families. `eastus2` works.
+The FTDv VM uses the Dsv3 family. ISE uses Dsv4. Both are widely available, but not in every region. `eastus2` is a safe default. If you have a regional preference, confirm both families are offered there before you commit.
 
 ## Quota check
+
+Each VM is 8 vCPU. You need at least 8 vCPU available in each family.
 
 ```bash
 az vm list-usage --location eastus2 \
@@ -14,16 +16,18 @@ az vm list-usage --location eastus2 \
   -o table
 ```
 
-Need at least 8 vCPU available in each family. If short, request a quota increase via the Azure portal (can take hours).
+Look at the gap between Current and Limit. If either family has less than 8 vCPU free, request a quota increase via the Azure portal. The request can take hours to days. Do this first.
 
-## Marketplace terms
+## Accept marketplace terms
+
+Cisco publishes both images through the Azure Marketplace. Each image has terms you must accept once per subscription before Terraform can deploy a VM that uses it.
 
 ```bash
 az vm image terms accept --publisher cisco --offer cisco-ftdv --plan ftdv-azure-byol
 az vm image terms accept --publisher cisco --offer cisco-ise-virtual --plan cisco-ise_3_4
 ```
 
-For BYOL FTDv you also need Cisco Smart Licensing (handled later via cdFMC).
+The FTDv image is BYOL (Bring Your Own License). Smart Licensing handles the actual license activation later, after the device registers with cdFMC.
 
 ## Verify
 
@@ -32,13 +36,12 @@ az vm image terms show --publisher cisco --offer cisco-ftdv --plan ftdv-azure-by
 az vm image terms show --publisher cisco --offer cisco-ise-virtual --plan cisco-ise_3_4 --query accepted
 ```
 
-Both must return `true`.
+Both must return `true`. If either is `false`, Terraform will fail with a marketplace acceptance error.
 
-## Resource group
+## What about the resource group?
 
-Terraform creates the resource group. No manual step.
+You do not need to create one. Terraform creates it for you using the name in `terraform.tfvars` (default: `rg-ravpn-workshop`).
 
-## Notes
+## A note on Bastion
 
-- Bastion is a per-VNet resource. One Bastion serves all VMs in this VNet.
-- The FTDv management interface stays private. Bastion is the only admin path.
+Bastion is a per-VNet resource. We deploy one Bastion in this VNet and it serves every VM. There is no second jump host and no public IP on FTDv management or ISE. If your team policy forbids Bastion for some reason, you would need to redesign the network module before deploying.

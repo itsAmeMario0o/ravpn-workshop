@@ -1,10 +1,12 @@
 # 24-hour execution plan
 
-Phase-based plan for the RAVPN workshop build. Each phase has a goal, deliverables, validation gate, and recovery path.
+How to build this environment in one day without losing time to avoidable mistakes.
 
-Aligns with the build priority tiers, Definition of done table, and Verification checklist in `CLAUDE.md`. The detailed architecture lives in `azure-demo-plan.md`.
+Each phase has a goal, the deliverables that count as done, a validation gate that has to pass before the next phase starts, and a short note on what to do if the gate fails. The order matters — the gates are the cheapest place to catch problems.
 
-**Critical path constraints:** FTDv boot ~20 min, ISE first-boot ~45-60 min, Let's Encrypt DNS-01 ~5-15 min, marketplace term acceptance is a one-time gate. Build around these waits — do parallel work during boot windows.
+This file aligns with the build priority tiers, the definition-of-done table, and the verification checklist in `CLAUDE.md`. The detailed architecture lives in `azure-demo-plan.md`.
+
+The schedule is shaped by three slow things: FTDv first boot is around 20 minutes, ISE first boot is 45 to 60 minutes, and Let's Encrypt DNS-01 challenges take 5 to 15 minutes to propagate. Marketplace term acceptance is a one-time gate. Build around the slow steps. Use the boot windows for unrelated work.
 
 ---
 

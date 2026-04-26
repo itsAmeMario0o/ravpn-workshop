@@ -1,73 +1,76 @@
 # cdFMC registration
 
-Register FTDv to cdFMC via Security Cloud Control.
+The FTDv we just deployed knows nothing about its manager yet. This step connects it to cdFMC so policy, monitoring, and the VPN dashboard work.
 
-## Prerequisites
+There is one twist that catches people every time: the management interface on this FTDv has no public IP. The original Cisco docs assume management has Internet access. Ours does not. Before you can register, you tell FTDv to send sftunnel out the data interface (outside) instead. That is one extra command at the FTD CLI.
 
-- Terraform deploy complete. `vm-ftdv` is running.
-- Bastion deployed.
-- SCC tenant has cdFMC provisioned. From SCC, get the registration command and NAT ID. They were already used as Terraform inputs (`ftdv_reg_key`, `ftdv_nat_id`); the same pair is required at the FTD CLI.
+## Before you start
 
-## 1. Wait for FTDv first boot
+- Terraform deploy is complete. `vm-ftdv` is running.
+- Bastion is deployed and reachable.
+- You have the registration command and NAT ID from Security Cloud Control. The same values are in your `terraform.tfvars` (`ftdv_reg_key` and `ftdv_nat_id`); the FTD CLI will need the matching pair.
+
+## 1. Wait for first boot
+
+FTDv takes 15-20 minutes after the VM reaches `running` for the FTD software to finish bootstrapping. Trying to register before that fails confusingly.
 
 ```bash
-az vm get-instance-view -g rg-ravpn-workshop -n vm-ftdv --query "instanceView.statuses[?code=='PowerState/running'].displayStatus" -o tsv
+az vm get-instance-view -g rg-ravpn-workshop -n vm-ftdv \
+  --query "instanceView.statuses[?code=='PowerState/running'].displayStatus" -o tsv
 ```
 
-Expected: `VM running`. Then wait an additional 15-20 minutes for FTD bootstrap to complete.
+You want `VM running`. Then wait 15 more minutes, then try the next step.
 
-## 2. Open Bastion tunnel
+## 2. Open a Bastion tunnel to FTDv
 
 ```bash
 scripts/bastion-tunnel.sh ftdv 50022
 ```
 
+Leave that terminal open. It holds the tunnel.
+
 ## 3. SSH to FTDv
+
+In a second terminal:
 
 ```bash
 ssh -p 50022 cisco@127.0.0.1
 ```
 
-Password is the value you put in `ftdv_admin_password`.
-
-You land at the FTD CLI (`>` prompt, not the Linux shell).
+The password is whatever you set in `ftdv_admin_password`. You land at the FTD CLI, recognizable by the `>` prompt. This is not a Linux shell — most Linux commands do not work here.
 
 ## 4. Configure data-interface management
-
-The mgmt NIC has no Internet egress. cdFMC sftunnel must come out of the outside data interface.
 
 ```
 > configure network management-data-interface
 ```
 
-Follow the prompts:
-
-- Use the outside interface (typically `GigabitEthernet0/1`).
-- Confirm.
+The CLI prompts you to pick the data interface. Choose the outside interface (typically `GigabitEthernet0/1`). Confirm. The device may briefly drop the management session and come back; that is expected.
 
 ## 5. Register to cdFMC
 
-Get the exact `configure manager add` command from SCC. It looks like:
+The exact command is the one Security Cloud Control gave you. It looks like this:
 
 ```
 > configure manager add <SCC FQDN> <reg_key> <nat_id>
 ```
 
-The `<reg_key>` and `<nat_id>` must match what you set in `terraform.tfvars`.
+The `<reg_key>` and `<nat_id>` you paste here must match exactly what you put in `terraform.tfvars`. If they do not match, registration silently fails — the FTD says it is registered, cdFMC never sees it.
 
 ## Verify
 
-In cdFMC: **Inventory > Devices**. The FTDv appears within 5-10 minutes and progresses through `Pending Registration` to `Healthy`.
+In Security Cloud Control: **cdFMC > Inventory > Devices**. The FTDv appears within 5-10 minutes. It progresses through `Pending Registration` to `Healthy`.
 
-```bash
-# At the FTD CLI:
+At the FTD CLI:
+
+```
 > show managers
 ```
 
 Expected: the SCC FQDN listed with state `Completed`.
 
-## Troubleshooting
+## When it gets stuck
 
-- **Stuck at Pending Registration:** check `nsg-outside` allows TCP 8305 outbound. Confirm `configure network management-data-interface` was run.
-- **`configure manager` rejected:** mismatched reg key or NAT ID. Verify against SCC and `terraform.tfvars`.
-- **Bastion connection refused:** the FTDv has not finished bootstrap. Wait 5 more minutes.
+- **Stuck at Pending Registration:** the FTD cannot reach SCC. Check that `nsg-outside` permits TCP 8305 outbound, and that you actually ran `configure network management-data-interface` before the manager add.
+- **`configure manager add` rejected:** the registration key or NAT ID is wrong. Double-check both against Security Cloud Control and against `terraform.tfvars`. They are case-sensitive.
+- **Bastion connection times out:** the FTDv is still booting. Wait five more minutes and try again. If it has been 30 minutes since `terraform apply` and it still times out, check the VM's boot diagnostics for an actual problem.
