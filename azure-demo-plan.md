@@ -311,7 +311,7 @@ Keep Cloudflare proxy off (gray cloud). Orange cloud introduces TLS termination 
 
 ### Entra custom domain (rooez.com)
 
-The Entra tenant primary domain is `mariojruiz.com`. To create users with `@rooez.com` UPNs, add and verify `rooez.com` as a custom domain.
+The Entra tenant primary domain is the tenant's default `<tenant>.onmicrosoft.com` (or whichever custom domain is already verified on it). To create users with `@rooez.com` UPNs, add and verify `rooez.com` as a custom domain.
 
 1. Entra > Custom domain names > Add domain > enter `rooez.com`.
 2. Entra provides a TXT record value. Add it in Cloudflare: Type TXT, Name `@`, Value from Entra.

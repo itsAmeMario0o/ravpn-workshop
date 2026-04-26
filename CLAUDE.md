@@ -331,7 +331,7 @@ Examples:
 |---|---|
 | project | `ravpn-workshop` |
 | environment | `demo` |
-| owner | `mario.ruiz@cisco.com` |
+| owner | set via `owner_tag` in `terraform.tfvars` (gitignored). Default is `ravpn-workshop` so no PII lands in the public repo. |
 
 Do not include a `demo-date` tag. The repo is reused across workshops.
 

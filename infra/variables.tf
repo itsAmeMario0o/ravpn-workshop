@@ -57,6 +57,12 @@ variable "app_admin_ssh_public_key" {
   type        = string
 }
 
+variable "owner_tag" {
+  description = "Value for the 'owner' tag on every resource. Set in terraform.tfvars to your email or team name. Defaults to a generic placeholder so the source repo carries no PII."
+  type        = string
+  default     = "ravpn-workshop"
+}
+
 variable "ftdv_image_plan" {
   description = "Cisco FTDv 10.x marketplace plan: cisco-ftdv-x86-byol or cisco-ftdv-x86-payg."
   type        = string

@@ -4,6 +4,10 @@ location             = "eastus2"
 resource_group_name  = "rg-ravpn-workshop"
 vnet_address_space   = "10.100.0.0/16"
 
+# Owner tag value. Use whatever your team uses (email, team name, alias).
+# This stays local because terraform.tfvars is gitignored.
+owner_tag = "your-email-or-team"
+
 # FTDv Day-0 bootstrap.
 ftdv_admin_password = "REPLACE-ME-strong-password"
 ftdv_reg_key        = "REPLACE-ME-from-SCC"

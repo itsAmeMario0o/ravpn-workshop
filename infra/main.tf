@@ -6,7 +6,7 @@ locals {
   common_tags = {
     project     = "ravpn-workshop"
     environment = "demo"
-    owner       = "mario.ruiz@cisco.com"
+    owner       = var.owner_tag
   }
 }
 

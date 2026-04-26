@@ -25,8 +25,15 @@ TUNNEL_PORT="${TUNNEL_PORT:-50022}"
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 APP_DIR="${REPO_ROOT}/app"
 DIST_DIR="${APP_DIR}/dist"
+APP_CERT="${REPO_ROOT}/certs/app/trading.crt"
+APP_KEY="${REPO_ROOT}/certs/app/trading.key"
 
 log() { echo "[$1] $2"; }
+
+if [[ ! -f "${APP_CERT}" || ! -f "${APP_KEY}" ]]; then
+  log ERROR "app cert pair missing. run scripts/generate-app-cert.sh first."
+  exit 1
+fi
 
 log INFO "building React app..."
 cd "${APP_DIR}"
@@ -80,12 +87,14 @@ server {
 }
 NGINX
 
-log INFO "generating self-signed cert (used for backend TLS only; FTD presents the public cert)..."
-ssh ${SSH_OPTS} "${APP_USER}@127.0.0.1" 'sudo openssl req -x509 -nodes -days 825 -newkey rsa:2048 \
-  -keyout /etc/ssl/private/trading.key \
-  -out /etc/ssl/certs/trading.crt \
-  -subj "/CN=trading-internal" 2>/dev/null && \
-  sudo chmod 600 /etc/ssl/private/trading.key'
+log INFO "uploading local app cert + key to the VM..."
+scp ${SCP_OPTS} "${APP_CERT}" "${APP_USER}@127.0.0.1:/tmp/trading.crt"
+scp ${SCP_OPTS} "${APP_KEY}"  "${APP_USER}@127.0.0.1:/tmp/trading.key"
+ssh ${SSH_OPTS} "${APP_USER}@127.0.0.1" '
+  sudo install -m 644 -o root -g root /tmp/trading.crt /etc/ssl/certs/trading.crt
+  sudo install -m 600 -o root -g root /tmp/trading.key /etc/ssl/private/trading.key
+  rm -f /tmp/trading.crt /tmp/trading.key
+'
 
 log INFO "enabling site and reloading nginx..."
 ssh ${SSH_OPTS} "${APP_USER}@127.0.0.1" '

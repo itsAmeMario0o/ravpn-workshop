@@ -18,6 +18,7 @@ crash.log
 cloudflare.ini
 **/secrets/
 **/credentials/
+certs/
 
 # Python
 __pycache__/
