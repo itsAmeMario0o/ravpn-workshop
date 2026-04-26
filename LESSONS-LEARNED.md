@@ -110,6 +110,27 @@ Each entry has three parts:
 
 **Fix:** Always check the current Microsoft Learn doc rather than trusting older third-party walkthroughs. As of this build: **Disable Security Defaults** lives at **Entra ID > Overview > Properties tab > Manage security defaults**. **Custom domains** lives at **Entra ID > Domain names**. If your portal differs, search Microsoft Learn for the feature name and the current path is in the article.
 
+### Curly quotes and `!` history expansion break shell exports
+
+**Symptom:** You paste a curl command from chat or a doc into your terminal, and zsh returns `zsh: event not found: <something>` instead of running the command. Or the command runs but the env var contains weird Unicode characters that break the API call.
+
+**Cause:** Two separate traps that often hit at the same time.
+
+1. zsh expands `!` inside **double quotes** as history substitution. A password like `!Password1` triggers a history lookup for "Password1", which fails.
+2. Some terminals, browsers, and paste tools auto-replace straight quotes (`"`) with curly/smart quotes (`"` `"`). They look identical at a glance. zsh treats curly quotes as literal characters in the value, not as quoting.
+
+**Fix:** Use **single quotes** around any value containing `!` or special characters:
+
+```bash
+TRADER1_PASSWORD='!Password1'
+```
+
+Single quotes are completely literal in zsh — no history expansion, no variable substitution. If you must use double quotes, escape `!` with a backslash (`\!`).
+
+When pasting commands from a doc, eyeball the quotes. If they're slanted (`"` `"`), retype them as straight (`"` or `'`).
+
+This trap shows up most often in the ROPC curl test in `setup/entra-config.md` because trader1's password almost always contains a special character.
+
 ### Security Defaults blocks ROPC
 
 **Symptom:** ISE auth against Entra fails. The curl ROPC test returns `invalid_grant` with a message about MFA or conditional access.
