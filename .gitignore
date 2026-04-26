@@ -20,6 +20,12 @@ cloudflare.ini
 **/credentials/
 certs/
 
+# SAML federation metadata files contain IdP cert and tenant URLs.
+# Treated as sensitive even though they are technically public-issuable.
+RAVPN-ZTAA-Trading.xml
+*FederationMetadata*.xml
+*-Federation-*.xml
+
 # Python
 __pycache__/
 *.pyc
