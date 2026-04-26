@@ -1,0 +1,27 @@
+title = "JPMC RAVPN Demo - Gitleaks Config"
+
+[allowlist]
+description = "Allowlisted patterns"
+paths = [
+  '''terraform\.tfvars\.example''',
+  '''setup/.*\.md''',
+  '''docs/.*\.md''',
+]
+
+[[rules]]
+id = "cisco-reg-key"
+description = "Cisco registration key"
+regex = '''(?i)(reg[-_]?key|registration[-_]?key)\s*[=:]\s*['"]?[\w-]{8,}'''
+tags = ["cisco", "credential"]
+
+[[rules]]
+id = "azure-client-secret"
+description = "Azure client secret"
+regex = '''(?i)(client[-_]?secret|AZURE_CLIENT_SECRET)\s*[=:]\s*['"]?[\w~.-]{30,}'''
+tags = ["azure", "credential"]
+
+[[rules]]
+id = "cloudflare-api-token"
+description = "Cloudflare API token"
+regex = '''(?i)(cloudflare[-_]?api[-_]?token|dns_cloudflare_api_token)\s*[=:]\s*['"]?[\w-]{30,}'''
+tags = ["cloudflare", "credential"]
