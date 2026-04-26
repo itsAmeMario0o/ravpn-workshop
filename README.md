@@ -28,6 +28,8 @@ ravpn-workshop/
 
 Read [`PLAN.md`](PLAN.md) for the phased build with validation gates, then work through [`setup/README.md`](setup/README.md) for the actual instructions. The setup guide is written so you can follow it without having deployed FTDv or ISE on Azure before.
 
+If something fails in a way you can't immediately explain, check [`LESSONS-LEARNED.md`](LESSONS-LEARNED.md) first — it captures the gotchas we hit during the build (Cisco, Azure, Entra portal navigation drift, Terraform, local toolchain).
+
 ## Cost warning
 
 The FTDv and ISE VMs are the dominant cost drivers — both run on 8 vCPU SKUs. Leaving the environment up for a week consumes a real budget. When the workshop ends, run `terraform destroy` from `infra/` and confirm the resource group is gone.
