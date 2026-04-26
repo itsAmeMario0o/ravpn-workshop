@@ -39,11 +39,13 @@ Look at the output. If you see a fullchain.pem and privkey.pem under `./certs/co
 
 ### Now generate the real cert
 
-Drop the `STAGING=1` and run again:
+Drop the `STAGING=1` and add `FORCE=1`:
 
 ```bash
-scripts/generate-certs.sh
+FORCE=1 scripts/generate-certs.sh
 ```
+
+`FORCE=1` adds `--force-renewal` to the certbot command. Without it, certbot sees the still-valid staging cert sitting at `certs/config/live/ravpn-demo/` and skips reissuance — its renewal logic doesn't notice that the existing cert was issued by the staging endpoint and the new request is for production. With force-renewal, certbot reissues regardless.
 
 This produces the real cert, valid for 90 days, signed by a CA your browser trusts.
 

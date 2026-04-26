@@ -18,11 +18,17 @@ set -euo pipefail
 #
 # Optional:
 #   STAGING=1      Use Let's Encrypt staging endpoint while iterating
+#   FORCE=1        Pass --force-renewal to certbot. Needed when going from a
+#                  staging cert to production at the same path: certbot
+#                  treats the existing staging cert as still valid and skips
+#                  reissuance unless forced.
 #   OUT_DIR        Output directory (default: ./certs)
 #
 # Usage:
-#   STAGING=1 scripts/generate-certs.sh
-#   scripts/generate-certs.sh   # production once you trust the chain
+#   STAGING=1 scripts/generate-certs.sh           # validate the chain first
+#   FORCE=1 scripts/generate-certs.sh             # promote to production
+#   scripts/generate-certs.sh                     # plain run (will skip if a
+#                                                 # valid cert already exists)
 
 CF_API_TOKEN="${CF_API_TOKEN:?CF_API_TOKEN must be set}"
 EMAIL="${EMAIL:?EMAIL must be set}"
@@ -74,6 +80,11 @@ done
 if [[ "${STAGING:-0}" == "1" ]]; then
   ARGS+=(--staging)
   log INFO "using Let's Encrypt staging endpoint"
+fi
+
+if [[ "${FORCE:-0}" == "1" ]]; then
+  ARGS+=(--force-renewal)
+  log INFO "force-renewal enabled (will reissue even if existing cert is valid)"
 fi
 
 log INFO "requesting cert for: ${DOMAINS[*]}"

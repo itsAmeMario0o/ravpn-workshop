@@ -110,6 +110,22 @@ Each entry has three parts:
 
 **Fix:** Always check the current Microsoft Learn doc rather than trusting older third-party walkthroughs. As of this build: **Disable Security Defaults** lives at **Entra ID > Overview > Properties tab > Manage security defaults**. **Custom domains** lives at **Entra ID > Domain names**. If your portal differs, search Microsoft Learn for the feature name and the current path is in the article.
 
+### certbot doesn't auto-reissue when going from staging to production
+
+**Symptom:** You run `STAGING=1 scripts/generate-certs.sh` to validate the chain, then re-run `scripts/generate-certs.sh` for the real cert. certbot prints `Certificate not yet due for renewal; no action taken` and exits without issuing a new cert. The cert at `certs/config/live/ravpn-demo/` still has the staging issuer.
+
+**Cause:** certbot's renewal logic checks "is the existing cert still valid?" not "was the existing cert issued by the same ACME server I'm about to ask?" Since the staging cert is still ~90 days from expiry, certbot decides there's nothing to do.
+
+**Fix:** Pass `FORCE=1` on the production run:
+
+```bash
+FORCE=1 scripts/generate-certs.sh
+```
+
+The script translates this into certbot's `--force-renewal` flag, which makes certbot reissue regardless of expiry state. Burns 1 of your 5 weekly production-issuance attempts on `rooez.com`.
+
+The same flag is what you'd use later if you ever needed to force a renewal mid-cycle for any other reason (e.g., key rotation).
+
 ### Curly quotes and `!` history expansion break shell exports
 
 **Symptom:** You paste a curl command from chat or a doc into your terminal, and zsh returns `zsh: event not found: <something>` instead of running the command. Or the command runs but the env var contains weird Unicode characters that break the API call.
