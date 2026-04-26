@@ -16,7 +16,7 @@ Each entry has three parts:
 
 **Symptom:** `terraform apply` fails partway through with a quota error mentioning "regional cores," even though the per-family quotas (DSv3, DSv4, BS) look like they have plenty of headroom.
 
-**Cause:** Azure has two layers of quota in the same region. Per-family caps say "you can have N vCPUs of this VM family." A separate **Total Regional vCPUs** cap says "across every family combined, no more than N vCPUs." The default for a new subscription is 10. This demo needs 17 (FTDv 8 + ISE 8 + app 1).
+**Cause:** Azure has two layers of quota in the same region. Per-family caps say "you can have N vCPUs of this VM family." A separate **Total Regional vCPUs** cap says "across every family combined, no more than N vCPUs." The default for a new subscription is 10. This demo needs 13 (FTDv 4 on D4s_v3 + ISE 8 on D8s_v4 + app 1 on B1s).
 
 **Fix:** Request a quota increase via the Azure portal (Subscriptions > your subscription > Usage + quotas > filter to your region > "Total Regional vCPUs"). Ask for at least 24 to give yourself headroom. Approval is usually quick on default-tier subscriptions.
 

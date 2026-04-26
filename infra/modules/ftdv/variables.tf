@@ -57,9 +57,9 @@ variable "image_version" {
 }
 
 variable "vm_size" {
-  description = "Azure VM size. FTD 10.x requires Dsv3 or Fsv2."
+  description = "Azure VM size. FTD 10.x requires Dsv3 or Fsv2 family. Default sized for FTDv5 (4 vCPU / 8 GB Cisco-recommended); D4s_v3 also covers FTDv10 and FTDv20. For FTDv30 step up to D8s_v3; for FTDv50 step up to D16s_v3."
   type        = string
-  default     = "Standard_D8s_v3"
+  default     = "Standard_D4s_v3"
 }
 
 variable "tags" {
