@@ -635,7 +635,17 @@ Concrete defaults:
 
 ### Comment style for this repo
 
-This is a workshop demo. Reviewers and attendees may have zero prior exposure to FTDv, ISE, Azure, or even Terraform. Override the usual "default to no comments" rule and comment generously. Each file gets a header that says what it is and why it exists. Each non-obvious resource or block gets a short inline comment explaining the choice. Use plain English, active voice, no jargon without a definition on first use. Tone matches the setup guides: simple, direct, accessible.
+This is a workshop demo. Reviewers and attendees may have zero prior exposure to FTDv, ISE, Azure, or even Terraform. Override the usual "default to no comments" rule and comment generously.
+
+Three principles, all of them mandatory:
+
+1. **Plain language.** Short sentences, active voice, no jargon without a definition on first use. If a term is Cisco-specific, FTDv-specific, or Azure-specific, define it the first time it appears in the file.
+2. **Zero knowledge assumed.** Write as if the reader has never deployed FTDv, never used Terraform, and never seen this codebase. Explain what each block does and why the choice was made, not just what the next line of code is.
+3. **Humanizer-cleaned.** No AI-writing tells. Specifically: no "leverage", "utilize", "comprehensive", "seamless", "robust", "cutting-edge", "pivotal", "delve", "tapestry", "stands as", "serves as", "underscores", "highlights its importance", em-dashes, curly quotes, or rule-of-three filler. The same forbidden list as the Writing standards section above. If a sentence sounds like it was generated, rewrite it.
+
+Each file gets a header that says what it is and why it exists. Each non-obvious resource or block gets a short inline comment explaining the choice. Tone matches the setup guides: simple, direct, accessible.
+
+This applies to every commented file in the repo, including future commits. If you are adding code or changing a file that has comments, match the existing voice. If a file has no comments yet, add them following these rules.
 
 ### Python
 
