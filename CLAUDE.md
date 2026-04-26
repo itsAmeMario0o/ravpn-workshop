@@ -711,28 +711,29 @@ Apply the humanizer skill to all documentation before committing. Read the outpu
 
 ## Commit message format
 
-Conventional Commits, lowercase scope. One line subject, optional body separated by a blank line.
+Simple type-prefixed subject. Body optional, separated by a blank line.
 
 ```
-<type>(<scope>): <subject>
+<type>: <short description>
 
-<optional body explaining why, not what>
+<optional body>
 ```
 
-**Types:** `feat`, `fix`, `docs`, `chore`, `refactor`, `test`, `ci`.
+**Types:** `feat`, `fix`, `infra`, `docs`, `chore`, `test`.
 
-**Scopes:** `infra`, `app`, `scripts`, `setup`, `docs`, `automation`, `ci`, `repo`.
+`infra` is its own type, not a scope. Anything that touches `infra/` (Terraform, modules, providers) takes this type. `feat` is for application code, `fix` for bug fixes, `docs` for guides and READMEs, `chore` for tooling/CI/repo plumbing, `test` for test additions.
 
 Examples:
 
 ```
-feat(infra): add FTDv module with Day-0 custom data
-fix(app): correct ZTAA route base path for nginx
-docs(setup): add Cloudflare DNS-01 walkthrough
-chore(repo): add gitleaks pre-commit hook
+infra: add FTDv and ISEv Terraform modules
+feat: trading app with dual theme routes
+fix: correct NSG rule for sftunnel port
+docs: add ISE REST ID setup guide
+chore: add gitleaks pre-commit hook
 ```
 
-Subject under 70 characters. Imperative mood. No trailing period.
+Subject under 72 characters. Imperative mood. No trailing period. No issue references — this is a demo repo, not a product.
 
 ---
 
