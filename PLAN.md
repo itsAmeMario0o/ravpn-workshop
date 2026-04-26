@@ -53,14 +53,14 @@ Parallelizable in pairs:
 **Tests:**
 
 - [ ] `dig vpn.rooez.com` and `dig trading.rooez.com` resolve from a public resolver.
-- [ ] `openssl x509 -in fullchain.pem -text` shows both SANs.
+- [ ] `openssl x509 -in fullchain.pem -text` shows the wildcard SAN (`*.rooez.com`) and the apex (`rooez.com`).
 - [ ] `openssl x509 -in certs/app/trading.crt -noout -subject` shows `CN=trading-internal`.
 - [ ] Sign in to Entra as `trader1@rooez.com` and complete MFA enrollment.
 
 **Validation gate:**
 
 - [ ] DNS resolves to placeholder.
-- [ ] Identity cert (Let's Encrypt) covers both SANs, expiry > 60 days.
+- [ ] Identity cert (Let's Encrypt) covers `*.rooez.com` and `rooez.com`, expiry > 60 days.
 - [ ] Application cert (self-signed) and key both exist under `certs/app/`.
 - [ ] Federation Metadata XML downloaded from the Entra Enterprise App.
 - [ ] `trader1` can sign in and MFA prompts work.

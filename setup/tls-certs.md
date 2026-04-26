@@ -4,7 +4,7 @@ ZTAA on FTD needs three different certs. They serve different purposes and come 
 
 | Cert | What it does | Source | Where it goes |
 |---|---|---|---|
-| Identity cert | Presented by FTD to the user's browser when they hit `vpn.rooez.com` or `trading.rooez.com`. The browser must trust the issuing CA. | Public CA. **Let's Encrypt SAN cert** covering both FQDNs. | `Devices > Certificates > Add` in cdFMC, as PKCS12, with SSL Client + SSL Server flags. |
+| Identity cert | Presented by FTD to the user's browser when they hit any `*.rooez.com` host. The browser must trust the issuing CA. | Public CA. **Let's Encrypt wildcard SAN cert** covering `rooez.com` and `*.rooez.com`. | `Devices > Certificates > Add` in cdFMC, as PKCS12, with SSL Client + SSL Server flags. |
 | SAML IdP cert | Validates SAML assertions coming back from Entra. | Embedded in the **Entra Federation Metadata XML** you download when configuring the Enterprise App. You don't generate it. | `Devices > Certificates > Manual enrollment > CA Only` in cdFMC. |
 | Application cert | FTD uses this to terminate / inspect / re-encrypt the protected app's traffic. Requires the app server's own cert *and* private key. | **Self-signed**, generated locally by `scripts/generate-app-cert.sh`. The same pair is used by nginx on the app VM and uploaded to cdFMC. | `Objects > Object Management > PKI > Internal Certs > Add` in cdFMC, as both cert file and key file. |
 
@@ -12,7 +12,7 @@ The rest of this guide focuses on the identity cert (Let's Encrypt) and the appl
 
 ## Identity cert: Let's Encrypt
 
-We use a Let's Encrypt SAN cert with `vpn.rooez.com` and `trading.rooez.com` on the same certificate. Let's Encrypt verifies that you control the domain through a DNS-01 challenge — they ask for a specific TXT record, certbot adds it via the Cloudflare API, Let's Encrypt sees it, and issues the cert. You do not need a public IP or a web server for this — the validation is entirely DNS-based.
+We use a Let's Encrypt wildcard SAN cert covering `rooez.com` and `*.rooez.com`. One cert covers every subdomain you might add later (`vpn`, `trading`, `ise`, anything else), so you do not have to re-issue when you ZTAA-enable a new app. Let's Encrypt verifies that you control the domain through a DNS-01 challenge: they ask for a specific TXT record, certbot adds it via the Cloudflare API, Let's Encrypt sees it, and issues the cert. You do not need a public IP or a web server for this. The validation is entirely DNS-based.
 
 ### Before you run
 
@@ -58,8 +58,10 @@ openssl x509 -in ./certs/config/live/ravpn-workshop/fullchain.pem -noout -text |
 Expected:
 
 ```
-DNS:trading.rooez.com, DNS:vpn.rooez.com
+DNS:*.rooez.com, DNS:rooez.com
 ```
+
+The wildcard `*.rooez.com` covers any single-level subdomain. The bare `rooez.com` is a separate SAN because wildcards do not match the apex.
 
 Look at the expiry:
 

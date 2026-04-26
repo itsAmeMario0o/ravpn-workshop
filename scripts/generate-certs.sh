@@ -1,13 +1,20 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Generates a Let's Encrypt SAN cert for vpn.rooez.com and trading.rooez.com
-# using the DNS-01 challenge against Cloudflare. The cert is later uploaded
-# to FTDv via cdFMC.
+# Generates a Let's Encrypt wildcard SAN cert covering rooez.com and any
+# subdomain of it. The DNS-01 challenge runs against Cloudflare. The cert
+# is uploaded to cdFMC later as the identity cert (the one Cisco Secure
+# Client and the user's browser see).
+#
+# Why wildcard: a single cert covers vpn.rooez.com, trading.rooez.com,
+# ise.rooez.com, and anything else added later. New ZTAA-protected apps
+# need only a Cloudflare A record - no cert reissue, no re-binding.
 #
 # Required env vars:
 #   CF_API_TOKEN   Cloudflare API token with DNS edit on rooez.com
-#   EMAIL          Email address for the Let's Encrypt account
+#   EMAIL          Email address for the Let's Encrypt ACME account.
+#                  This is just where renewal warnings go - it does not
+#                  need to be at the domain you are issuing for.
 #
 # Optional:
 #   STAGING=1      Use Let's Encrypt staging endpoint while iterating
@@ -20,7 +27,11 @@ set -euo pipefail
 CF_API_TOKEN="${CF_API_TOKEN:?CF_API_TOKEN must be set}"
 EMAIL="${EMAIL:?EMAIL must be set}"
 OUT_DIR="${OUT_DIR:-./certs}"
-DOMAINS=(vpn.rooez.com trading.rooez.com)
+# The cert covers the apex domain and any subdomain via a wildcard. That
+# means vpn.rooez.com, trading.rooez.com, ise.rooez.com, and anything else
+# under rooez.com are all valid. The apex itself (rooez.com) is included
+# as a separate SAN because wildcards do not match the bare domain.
+DOMAINS=(rooez.com "*.rooez.com")
 
 log() { echo "[$1] $2"; }
 
