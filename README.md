@@ -1,13 +1,13 @@
 # RAVPN Workshop
 
-A self-contained Azure environment for demonstrating Cisco Secure Access. Four working demos, one whiteboard discussion, and enough infrastructure-as-code to rebuild the whole thing in a couple of hours.
+A self-contained Azure environment that demos remote access VPN on FTD with cdFMC (cloud-delivered FMC) management, plus geolocation VPN and Zero Trust Application Access on the same box. Four working demos, one whiteboard discussion, and enough infrastructure-as-code to rebuild the whole thing in a couple of hours.
 
 ## What it shows
 
-- **RAVPN.** A user opens Cisco Secure Client, signs in, and lands on a fictitious trading dashboard. The firewall (FTDv) terminates the tunnel. ISE handles RADIUS. Entra ID validates the password. No tunnel, no dashboard.
+- **Remote access VPN on FTD.** A user opens Cisco Secure Client, signs in, and lands on a fictitious trading dashboard. The firewall (FTDv) terminates the tunnel. ISE handles RADIUS. Entra ID validates the password. No tunnel, no dashboard.
+- **cdFMC management.** All FTD policy and monitoring lives in cloud-delivered FMC, reached through Security Cloud Control. The same dashboard shows the active VPN sessions, the geographies, and the Secure Client versions.
 - **Geolocation VPN.** Two connection profiles on the same firewall apply different policy based on where the client is connecting from. The cdFMC dashboard shows the geographic mix.
-- **ZTAA (Zero Trust Application Access).** A user opens a browser, hits the same dashboard, and the firewall acts as a zero-trust broker. SAML to Entra, MFA via Authenticator, and back to the app. No VPN client involved.
-- **cdFMC VPN dashboard.** Sessions, geographies, Secure Client versions, all live.
+- **Zero Trust Application Access (ZTAA).** A user opens a browser, hits the same dashboard, and the firewall acts as a zero-trust broker. SAML to Entra, MFA via Authenticator, and back to the app. No VPN client involved.
 - **Multi-instance (whiteboard only).** A short discussion of FTD multi-instance on Firepower 4100/4200 for hardware-isolated workloads. Not deployed.
 
 ## Repository layout
