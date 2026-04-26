@@ -1,3 +1,23 @@
+# ISE: Cisco Identity Services Engine.
+#
+# In this demo ISE has one job: be the RADIUS server in the RAVPN flow.
+# Users connect with Cisco Secure Client, the firewall sends a RADIUS
+# request to ISE, ISE checks the credentials against Entra ID over OAuth
+# ROPC, and returns Accept or Reject.
+#
+# This is an Extra Small PSN-only deployment. ISE has multiple personas
+# in production (PAN, MnT, PSN, pxGrid). For the demo, the single node
+# wears the PSN hat (Policy Service Node, the one that handles RADIUS).
+# That keeps memory and disk requirements modest.
+#
+# First boot takes 45-60 minutes. ISE installs and self-configures during
+# that window; trying to reach the GUI before it finishes returns a
+# certificate error or a connection refusal.
+
+# User data is plaintext key=value pairs, base64-encoded. ISE reads this
+# at first boot and uses it for hostname, DNS, NTP, timezone, the admin
+# password, and which APIs to enable. ERS, OpenAPI, and pxGrid are all
+# turned on so ISE can be configured programmatically later.
 locals {
   user_data = <<-EOT
     hostname=ise-ravpn
@@ -13,6 +33,8 @@ locals {
   EOT
 }
 
+# Single NIC for ISE. Lives on the identity subnet, accessible to the
+# firewall (RADIUS) and to admin sessions through Bastion.
 resource "azurerm_network_interface" "this" {
   name                = "nic-ise"
   location            = var.location
@@ -27,6 +49,9 @@ resource "azurerm_network_interface" "this" {
   }
 }
 
+# The ISE VM. Standard_D8s_v4 hits the Extra Small PSN-only sizing target
+# (8 vCPU, 32 GB RAM). The 300 GB disk is a Cisco minimum - smaller and
+# the bootstrap fails halfway through.
 resource "azurerm_linux_virtual_machine" "this" {
   name                = "vm-ise"
   location            = var.location

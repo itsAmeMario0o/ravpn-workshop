@@ -1,3 +1,15 @@
+// Static demo data for the trading dashboard.
+//
+// Every ticker symbol and company name in this file is fictional. They
+// don't map to real public companies. That keeps the workshop neutral
+// across audiences and avoids accidentally implying anything about a
+// specific firm's holdings.
+//
+// generateChartSeries() takes a seed and produces a deterministic price
+// curve. Same seed = same curve, every render. We don't fetch live data
+// - that's intentional. The dashboard is a backdrop for the security
+// demo, not a market simulator.
+
 import type { Position, PricePoint, Quote } from "../types";
 
 export const watchlist: Quote[] = [

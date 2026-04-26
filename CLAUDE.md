@@ -633,6 +633,10 @@ Concrete defaults:
 - A reader should understand any single file end-to-end without jumping between modules.
 - If you reach for a design pattern, justify it in a comment. If you cannot justify it, remove it.
 
+### Comment style for this repo
+
+This is a workshop demo. Reviewers and attendees may have zero prior exposure to FTDv, ISE, Azure, or even Terraform. Override the usual "default to no comments" rule and comment generously. Each file gets a header that says what it is and why it exists. Each non-obvious resource or block gets a short inline comment explaining the choice. Use plain English, active voice, no jargon without a definition on first use. Tone matches the setup guides: simple, direct, accessible.
+
 ### Python
 
 - PEP 8 compliance. Use `ruff` for linting and formatting.

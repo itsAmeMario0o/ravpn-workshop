@@ -1,3 +1,10 @@
+# Outputs surfaced after `terraform apply` finishes.
+#
+# These values come back as JSON when you run `terraform output`. They're
+# what you need for the next steps in the build - update Cloudflare A
+# records to the firewall's public IP, ssh through Bastion to the
+# private IPs of the FTDv, ISE, and the app VM.
+
 output "resource_group_name" {
   description = "Name of the demo resource group."
   value       = azurerm_resource_group.this.name

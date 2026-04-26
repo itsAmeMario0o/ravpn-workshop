@@ -1,3 +1,22 @@
+# Trading app VM.
+#
+# This is a small Ubuntu VM that hosts nginx and a static React build
+# (the trading dashboard). It sits on the inside subnet behind the
+# firewall, so the only path to it from the Internet is through FTDv.
+#
+# The app has two routes:
+#   /vpn  - dark-themed dashboard, what RAVPN users see after the tunnel
+#   /ztaa - light-themed dashboard, what ZTAA users see after SAML+MFA
+#
+# Both routes run from the same React bundle. The themes are different
+# only so the workshop audience can visually tell which path they took.
+#
+# B1s is intentionally tiny - the app is static files served by nginx,
+# so a 1 vCPU / 1 GB RAM VM is plenty.
+
+# Cloud-init: minimal first-boot config. Installs nginx and openssl,
+# enables and starts nginx. The actual nginx site config and the React
+# build come later via scripts/deploy-trading-app.sh.
 locals {
   cloud_init = <<-EOT
     #cloud-config
@@ -12,6 +31,9 @@ locals {
   EOT
 }
 
+# Single NIC on the inside subnet. Static private IP so the firewall's
+# rules for "send ZTAA traffic to the app" can reference a stable
+# address.
 resource "azurerm_network_interface" "this" {
   name                = "nic-app"
   location            = var.location
@@ -26,6 +48,9 @@ resource "azurerm_network_interface" "this" {
   }
 }
 
+# The VM. SSH key auth only (no password). The deploy script reaches
+# this VM by tunneling through Bastion - there's no public IP and no
+# direct SSH path.
 resource "azurerm_linux_virtual_machine" "this" {
   name                = "vm-app"
   location            = var.location

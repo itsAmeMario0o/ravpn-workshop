@@ -1,3 +1,9 @@
+// Dark-themed dashboard. This is what a user sees after they connect
+// over Cisco Secure Client and the RAVPN tunnel comes up. The route is
+// /vpn so the audience can see in the URL bar that they're on the
+// VPN-mediated path. The "Authenticated via RAVPN" badge in the header
+// makes the same point visually.
+
 import { Activity } from "lucide-react";
 import { AuthBadge } from "../components/AuthBadge";
 import { MarketTicker } from "../components/MarketTicker";

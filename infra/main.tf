@@ -1,7 +1,23 @@
+# Root configuration for the RAVPN workshop environment.
+#
+# This file wires the modules together. Each module owns one piece of the
+# environment: network has the VNet and subnets, ftdv has the firewall,
+# ise has the RADIUS server, app has the trading dashboard VM, and bastion
+# is the only path for admin access. The root just feeds them inputs.
+#
+# Everything lives in one resource group. Terraform creates it. When you
+# run `terraform destroy`, the resource group goes with it, and every
+# resource inside disappears at the same time. That's the whole tear-down.
+
+# Azure provider. The empty features block is required by the provider but
+# nothing in this demo needs the non-default behavior.
 provider "azurerm" {
   features {}
 }
 
+# Tags applied to every resource so cost reports and audit tools have
+# something to filter by. The owner_tag value comes from terraform.tfvars
+# (which is gitignored), so personal info never lands in the public repo.
 locals {
   common_tags = {
     project     = "ravpn-workshop"
@@ -10,12 +26,15 @@ locals {
   }
 }
 
+# The single resource group everything else lives in.
 resource "azurerm_resource_group" "this" {
   name     = var.resource_group_name
   location = var.location
   tags     = local.common_tags
 }
 
+# Network: VNet, six subnets carved out of it, and the NSG that protects
+# the outside (Internet-facing) interface of the firewall.
 module "network" {
   source = "./modules/network"
 
@@ -25,6 +44,9 @@ module "network" {
   tags                = local.common_tags
 }
 
+# Azure Bastion. This is how you reach the firewall and ISE for admin.
+# Neither has a public IP; Bastion proxies SSH and HTTPS through Azure's
+# managed jumphost service so we don't run a jumphost VM ourselves.
 module "bastion" {
   source = "./modules/bastion"
 
@@ -34,6 +56,9 @@ module "bastion" {
   tags                = local.common_tags
 }
 
+# FTDv: the firewall. Four NICs (management, diagnostic, outside, inside),
+# one public IP on outside, and a Day-0 JSON that bootstraps the device
+# to wait for cdFMC registration after first boot.
 module "ftdv" {
   source = "./modules/ftdv"
 
@@ -51,6 +76,9 @@ module "ftdv" {
   tags                 = local.common_tags
 }
 
+# ISE: the RADIUS server in the RAVPN flow. The firewall sends RADIUS
+# requests here; ISE checks credentials against Entra over OAuth ROPC and
+# returns Accept or Reject. Only reachable for admin through Bastion.
 module "ise" {
   source = "./modules/ise"
 
@@ -64,6 +92,8 @@ module "ise" {
   tags                = local.common_tags
 }
 
+# Trading app VM. Ubuntu, nginx, with the React build copied in by the
+# deploy script. Sits on the inside subnet behind the firewall.
 module "app" {
   source = "./modules/app"
 

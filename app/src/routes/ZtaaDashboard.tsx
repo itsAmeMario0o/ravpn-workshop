@@ -1,3 +1,12 @@
+// Light-themed dashboard. This is what a user sees after they hit the
+// app FQDN in a browser, get redirected to Entra for SAML+MFA, and come
+// back authenticated. The route is /ztaa so the URL itself signals
+// which path was used. The "Authenticated via ZTAA + MFA" badge in the
+// header makes the difference obvious to the audience.
+//
+// Same components as VpnDashboard, just passed variant="light" instead
+// of "dark". One bundle, two themes, two access stories.
+
 import { Activity } from "lucide-react";
 import { AuthBadge } from "../components/AuthBadge";
 import { MarketTicker } from "../components/MarketTicker";
