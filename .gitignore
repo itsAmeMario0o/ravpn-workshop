@@ -1,0 +1,48 @@
+# Terraform
+*.tfstate
+*.tfstate.backup
+.terraform/
+.terraform.lock.hcl
+*.tfvars
+!terraform.tfvars.example
+crash.log
+
+# Secrets and credentials
+*.pem
+*.key
+*.crt
+*.pfx
+*.p12
+.env
+.env.*
+cloudflare.ini
+**/secrets/
+**/credentials/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
+
+# Node
+node_modules/
+dist/
+.vite/
+*.tsbuildinfo
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+*.zip
+*.tar.gz
