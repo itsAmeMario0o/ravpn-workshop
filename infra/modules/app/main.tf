@@ -35,7 +35,7 @@ locals {
 # rules for "send ZTAA traffic to the app" can reference a stable
 # address.
 resource "azurerm_network_interface" "this" {
-  name                = "nic-app"
+  name                = "nic-tradingapp"
   location            = var.location
   resource_group_name = var.resource_group_name
   tags                = var.tags
@@ -52,7 +52,7 @@ resource "azurerm_network_interface" "this" {
 # this VM by tunneling through Bastion - there's no public IP and no
 # direct SSH path.
 resource "azurerm_linux_virtual_machine" "this" {
-  name                = "vm-app"
+  name                = "vm-tradingapp"
   location            = var.location
   resource_group_name = var.resource_group_name
   size                = var.vm_size

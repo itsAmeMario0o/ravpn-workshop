@@ -10,7 +10,7 @@
 
 # The single VNet that holds all the demo subnets.
 resource "azurerm_virtual_network" "this" {
-  name                = "vnet-ravpn"
+  name                = "vnet-demo"
   address_space       = [var.vnet_address_space]
   location            = var.location
   resource_group_name = var.resource_group_name

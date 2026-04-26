@@ -182,7 +182,7 @@ fi
 
 # 10. Cert files. Both certs must exist locally before deploy. Warnings
 # rather than failures because preflight is run early in the flow.
-if [[ -f "${REPO_ROOT}/certs/config/live/ravpn-workshop/fullchain.pem" ]]; then
+if [[ -f "${REPO_ROOT}/certs/config/live/ravpn-demo/fullchain.pem" ]]; then
   pass "identity cert: present"
 else
   warn "identity cert: missing. run scripts/generate-certs.sh."

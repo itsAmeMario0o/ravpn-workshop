@@ -26,7 +26,7 @@ resource "azurerm_public_ip" "bastion" {
 # tunnel command work. Without it you can only use the Bastion web UI,
 # which doesn't help when you're trying to SCP a directory to a VM.
 resource "azurerm_bastion_host" "this" {
-  name                = "bastion-ravpn"
+  name                = "bastion-demo"
   location            = var.location
   resource_group_name = var.resource_group_name
   sku                 = "Standard"

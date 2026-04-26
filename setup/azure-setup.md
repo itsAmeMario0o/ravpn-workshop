@@ -42,7 +42,7 @@ Both must return `true`. If either is `false`, Terraform will fail with a market
 
 ## What about the resource group?
 
-You do not need to create one. Terraform creates it for you using the name in `terraform.tfvars` (default: `rg-ravpn-workshop`).
+You do not need to create one. Terraform creates it for you using the name in `terraform.tfvars` (default: `rg-ravpn-demo`).
 
 ## A note on Bastion
 

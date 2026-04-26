@@ -20,10 +20,10 @@ set -euo pipefail
 #
 # Usage:
 #   scripts/smoke-test.sh
-#   RG=rg-ravpn-workshop scripts/smoke-test.sh   # different resource group
+#   RG=rg-ravpn-demo scripts/smoke-test.sh   # different resource group
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-RG="${RG:-rg-ravpn-workshop}"
+RG="${RG:-rg-ravpn-demo}"
 
 ok=0
 fail=0
@@ -74,7 +74,7 @@ check_vm_running() {
 }
 check_vm_running "vm-ftdv"
 check_vm_running "vm-ise"
-check_vm_running "vm-app"
+check_vm_running "vm-tradingapp"
 
 # 4. DNS resolution. Both hostnames must resolve to the FTDv outside IP.
 # A mismatch usually means Cloudflare A records still point at the

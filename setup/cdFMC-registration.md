@@ -15,7 +15,7 @@ There is one twist that catches people every time: the management interface on t
 FTDv takes 15-20 minutes after the VM reaches `running` for the FTD software to finish bootstrapping. Trying to register before that fails confusingly.
 
 ```bash
-az vm get-instance-view -g rg-ravpn-workshop -n vm-ftdv \
+az vm get-instance-view -g rg-ravpn-demo -n vm-ftdv \
   --query "instanceView.statuses[?code=='PowerState/running'].displayStatus" -o tsv
 ```
 

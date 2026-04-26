@@ -6,19 +6,19 @@ set -euo pipefail
 # a self-signed cert (for backend TLS to ZTAA enforcement).
 #
 # Required env vars:
-#   RG                 Resource group name (default: rg-ravpn-workshop)
-#   APP_VM             App VM name (default: vm-app)
+#   RG                 Resource group name (default: rg-ravpn-demo)
+#   APP_VM             App VM name (default: vm-tradingapp)
 #   APP_USER           SSH user on the app VM
-#   BASTION            Bastion name (default: bastion-ravpn)
+#   BASTION            Bastion name (default: bastion-demo)
 #   APP_PRIVATE_IP     App VM private IP (default: 10.100.3.20)
 #
 # Usage:
 #   scripts/deploy-trading-app.sh
 
-RG="${RG:-rg-ravpn-workshop}"
-APP_VM="${APP_VM:-vm-app}"
+RG="${RG:-rg-ravpn-demo}"
+APP_VM="${APP_VM:-vm-tradingapp}"
 APP_USER="${APP_USER:?APP_USER must be set}"
-BASTION="${BASTION:-bastion-ravpn}"
+BASTION="${BASTION:-bastion-demo}"
 APP_PRIVATE_IP="${APP_PRIVATE_IP:-10.100.3.20}"
 TUNNEL_PORT="${TUNNEL_PORT:-50022}"
 

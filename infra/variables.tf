@@ -18,7 +18,7 @@ variable "location" {
 variable "resource_group_name" {
   description = "Name of the resource group that holds the demo environment."
   type        = string
-  default     = "rg-ravpn-workshop"
+  default     = "rg-ravpn-demo"
 }
 
 variable "vnet_address_space" {
@@ -66,15 +66,6 @@ variable "app_admin_username" {
 variable "app_admin_ssh_public_key" {
   description = "SSH public key for the trading app VM admin user."
   type        = string
-}
-
-# The owner tag value gets stamped onto every resource. Keeping it as a
-# variable means the source repo doesn't carry any personal info; you set
-# the real value in terraform.tfvars (which is gitignored).
-variable "owner_tag" {
-  description = "Value for the 'owner' tag on every resource. Set in terraform.tfvars to your email or team name. Defaults to a generic placeholder so the source repo carries no PII."
-  type        = string
-  default     = "ravpn-workshop"
 }
 
 # FTDv 10.x publishes under the cisco-ftdv-x86-* SKUs. The legacy

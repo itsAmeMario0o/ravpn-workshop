@@ -318,22 +318,22 @@ After the demo, restrict source IPs or tear down the environment entirely.
 **Resource names:** lowercase, hyphen-separated, prefixed by resource type. Pattern: `<type>-<role>[-<index>]`.
 
 Examples:
-- `vnet-ravpn`
+- `vnet-demo`
 - `nsg-outside`, `nsg-inside`, `nsg-mgmt`
 - `pip-ftdv-outside`
-- `vm-ftdv`, `vm-ise`, `vm-app`
+- `vm-ftdv`, `vm-ise`, `vm-tradingapp`
 - `nic-ftdv-mgmt`, `nic-ftdv-outside`
-- `bastion-ravpn`
+- `bastion-demo`
 
 **Tags:** apply to every resource at the resource group or module level. Required tags:
 
 | Tag | Value |
 |---|---|
-| project | `ravpn-workshop` |
+| project | `ravpn-demo` |
 | environment | `demo` |
-| owner | set via `owner_tag` in `terraform.tfvars` (gitignored). Default is `ravpn-workshop` so no PII lands in the public repo. |
+| owner | `mario` |
 
-Do not include a `demo-date` tag. The repo is reused across workshops.
+All three are hardcoded in the `locals` block in `infra/main.tf`. Do not include a `demo-date` tag. The repo is reused across workshops, and a date would just go stale.
 
 ---
 

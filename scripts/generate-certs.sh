@@ -64,7 +64,7 @@ ARGS=(
   --config-dir "${CONFIG_DIR}"
   --work-dir "${WORK_DIR}"
   --logs-dir "${LOGS_DIR}"
-  --cert-name ravpn-workshop
+  --cert-name ravpn-demo
 )
 
 for d in "${DOMAINS[@]}"; do
@@ -79,6 +79,6 @@ fi
 log INFO "requesting cert for: ${DOMAINS[*]}"
 certbot "${ARGS[@]}"
 
-CERT_PATH="${CONFIG_DIR}/live/ravpn-workshop"
+CERT_PATH="${CONFIG_DIR}/live/ravpn-demo"
 log INFO "cert written to ${CERT_PATH}/fullchain.pem and privkey.pem"
 log INFO "verify both SANs with: openssl x509 -in ${CERT_PATH}/fullchain.pem -noout -text | grep DNS"

@@ -1,12 +1,8 @@
 # Copy to terraform.tfvars and fill in real values. Do not commit terraform.tfvars.
 
 location             = "eastus2"
-resource_group_name  = "rg-ravpn-workshop"
+resource_group_name  = "rg-ravpn-demo"
 vnet_address_space   = "10.100.0.0/16"
-
-# Owner tag value. Use whatever your team uses (email, team name, alias).
-# This stays local because terraform.tfvars is gitignored.
-owner_tag = "your-email-or-team"
 
 # FTDv Day-0 bootstrap.
 ftdv_admin_password = "REPLACE-ME-strong-password"

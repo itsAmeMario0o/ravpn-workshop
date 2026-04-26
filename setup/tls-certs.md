@@ -35,7 +35,7 @@ export EMAIL="<your-email>"
 STAGING=1 scripts/generate-certs.sh
 ```
 
-Look at the output. If you see a fullchain.pem and privkey.pem under `./certs/config/live/ravpn-workshop/`, the chain is working.
+Look at the output. If you see a fullchain.pem and privkey.pem under `./certs/config/live/ravpn-demo/`, the chain is working.
 
 ### Now generate the real cert
 
@@ -52,7 +52,7 @@ This produces the real cert, valid for 90 days, signed by a CA your browser trus
 Look at the SANs:
 
 ```bash
-openssl x509 -in ./certs/config/live/ravpn-workshop/fullchain.pem -noout -text | grep DNS
+openssl x509 -in ./certs/config/live/ravpn-demo/fullchain.pem -noout -text | grep DNS
 ```
 
 Expected:
@@ -66,7 +66,7 @@ The wildcard `*.rooez.com` covers any single-level subdomain. The bare `rooez.co
 Look at the expiry:
 
 ```bash
-openssl x509 -in ./certs/config/live/ravpn-workshop/fullchain.pem -noout -enddate
+openssl x509 -in ./certs/config/live/ravpn-demo/fullchain.pem -noout -enddate
 ```
 
 Expected: a date roughly 90 days from now.

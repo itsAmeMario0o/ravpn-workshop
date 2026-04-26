@@ -16,13 +16,13 @@ provider "azurerm" {
 }
 
 # Tags applied to every resource so cost reports and audit tools have
-# something to filter by. The owner_tag value comes from terraform.tfvars
-# (which is gitignored), so personal info never lands in the public repo.
+# something to filter by. Three tags total. No demo-date tag - the repo
+# is reused across workshops, and a date would just go stale.
 locals {
   common_tags = {
-    project     = "ravpn-workshop"
+    project     = "ravpn-demo"
     environment = "demo"
-    owner       = var.owner_tag
+    owner       = "mario"
   }
 }
 

@@ -19,8 +19,8 @@ set -euo pipefail
 #   ssh -p 50022 admin@127.0.0.1
 #   open https://127.0.0.1:50443
 
-RG="${RG:-rg-ravpn-workshop}"
-BASTION="${BASTION:-bastion-ravpn}"
+RG="${RG:-rg-ravpn-demo}"
+BASTION="${BASTION:-bastion-demo}"
 
 target="${1:?target required: ftdv|ise|app}"
 local_port="${2:-50022}"
@@ -28,7 +28,7 @@ local_port="${2:-50022}"
 case "${target}" in
   ftdv) vm="vm-ftdv"; resource_port=22 ;;
   ise)  vm="vm-ise"; resource_port="${ISE_PORT:-22}" ;;
-  app)  vm="vm-app"; resource_port=22 ;;
+  app)  vm="vm-tradingapp"; resource_port=22 ;;
   *)    echo "[ERROR] unknown target: ${target}"; exit 1 ;;
 esac
 
