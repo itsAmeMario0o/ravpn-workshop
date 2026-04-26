@@ -211,6 +211,10 @@ ZTAA needs all three certs in cdFMC at once. Upload them before creating the app
 
 **If fails:** isolate the layer. RAVPN broken? Test FTDv to ISE RADIUS independently of ISE to Entra ROPC. ZTAA broken? Test FTDv to Entra SAML in isolation before adding the app group.
 
+### 5f. Optional - extend ZTAA to ISE GUI (h13)
+
+If you have time after the four core demos pass, add a second ZTAA app to demo the pattern at scale: the ISE admin GUI behind `ise.rooez.com`. About 30 minutes of operational config in cdFMC and Cloudflare. Full walk-through in `setup/ztaa-extensions.md`. Drop this if the workshop runs long.
+
 ---
 
 ## Phase 6 — End-to-end validation (h13 → h15)
