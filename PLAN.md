@@ -126,6 +126,16 @@ Build inside `infra/`:
 - [ ] DNS propagation: `dig vpn.rooez.com` returns the FTDv outside PIP.
 - [ ] App builds clean, both routes render.
 
+**Azure CLI checks after apply:**
+
+```bash
+az vm list -g rg-ravpn-demo -o table
+az network public-ip show -g rg-ravpn-demo -n pip-ftdv-outside --query "{name:name, ip:ipAddress, state:provisioningState}" -o table
+az network bastion show -g rg-ravpn-demo -n bastion-demo --query "{name:name, state:provisioningState, sku:sku.name}" -o table
+```
+
+Expected: three VMs running (`vm-ftdv`, `vm-ise`, `vm-tradingapp`), the public IP showing a real address with provisioning state `Succeeded`, and Bastion in `Succeeded` state with SKU `Standard`. `scripts/smoke-test.sh` runs these for you and adds DNS and TLS checks.
+
 **If fails:** for boot timeouts, give it 30 min before declaring failure (FTDv 10.x first-boot is slow).
 
 ---
@@ -180,10 +190,30 @@ Access control policy, NAT for outside, route to inside subnet for app reachabil
 - [ ] Address pool, split tunnel as desired.
 - [ ] Cert: bind the Let's Encrypt cert.
 
+**FTD CLI checks after RAVPN config and Secure Client connect:**
+
+```
+> show running-config tunnel-group
+> show running-config group-policy
+> show running-config webvpn
+> show crypto ca certificates
+> show vpn-sessiondb anyconnect
+```
+
+Expected: the tunnel-group references the ISE RADIUS server group; the group-policy lists the address pool and split tunnel ACL; webvpn shows the Let's Encrypt cert bound to the connection profile; the CA certificate list contains the cert chain you uploaded. After connecting with Secure Client, `show vpn-sessiondb anyconnect` should show one active session with an IP from `10.100.200.0/24` and an SSL/DTLS tunnel state.
+
 ### 5d. Geolocation profiles (h11.5 → h12)
 
 - [ ] Second connection profile.
 - [ ] Geo-based access control rules tied to country objects.
+
+**FTD CLI check after geolocation config:**
+
+```
+> show running-config access-list | include geo
+```
+
+Expected: at least one access-list entry referencing a geographic object. Confirms the geo-based rule actually compiled into the running config rather than failing silently.
 
 ### 5e. ZTAA (h12 → h13)
 
@@ -194,6 +224,15 @@ ZTAA needs all three certs in cdFMC at once. Upload them before creating the app
 - [ ] **Application cert** uploaded at `Objects > Object Management > PKI > Internal Certs > Add` with both `certs/app/trading.crt` and `certs/app/trading.key` from your laptop.
 - [ ] SSO Server Object pointing at the Entra Enterprise App. Replace `[AppGroupName]` placeholder with the real Application Group name. The two strings (Entra Entity ID, cdFMC SSO Server) must match exactly.
 - [ ] Application Group with `trading.rooez.com/ztaa` as the protected app and FTDv as the enforcement point. Bind the identity cert to the group and the application cert to the protected app.
+
+**FTD CLI checks after ZTAA config:**
+
+```
+> show running-config webvpn
+> show running-config tunnel-group type zero-trust
+```
+
+Expected: webvpn shows the ZTAA application group and the SAML SSO Server Object; the zero-trust tunnel-group lists the protected app and its enforcement settings. If either output is empty, the config did not deploy from cdFMC to the device — push the policy again.
 
 **Tests (per sub-phase, smallest unit first):**
 
@@ -225,6 +264,13 @@ If you have time after the four core demos pass, add a second ZTAA app to demo t
 - [ ] Walk every checkbox in the verification table.
 - [ ] Run the demo script you will use in front of the audience at least once, top to bottom.
 - [ ] Time each demo block — flag any that exceed the workshop's per-section budget.
+
+**cdFMC dashboard walkthrough.** This is itself a verification step. With one Secure Client session live, open cdFMC and confirm under **Monitoring > VPN > Remote Access VPN**:
+
+- [ ] Active sessions list shows the connected user.
+- [ ] Connection profile grouping reflects the profile you bound the user to.
+- [ ] Geographic distribution view shows the source country/region.
+- [ ] Secure Client version inventory shows the connected client's version.
 
 **Validation gate:**
 

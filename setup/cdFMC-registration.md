@@ -61,13 +61,25 @@ The `<reg_key>` and `<nat_id>` you paste here must match exactly what you put in
 
 In Security Cloud Control: **cdFMC > Inventory > Devices**. The FTDv appears within 5-10 minutes. It progresses through `Pending Registration` to `Healthy`.
 
-At the FTD CLI:
+At the FTD CLI, run these three checks:
 
 ```
 > show managers
 ```
 
-Expected: the SCC FQDN listed with state `Completed`.
+Expected: the SCC FQDN listed with state `Completed`. This confirms the device is registered and the sftunnel is up.
+
+```
+> show version
+```
+
+Expected: an FTD version string starting with `10.` (the workshop deploys 10.x). Confirms the image version is what you expect, not an older fallback.
+
+```
+> show interface ip brief
+```
+
+Expected: the outside interface (typically `GigabitEthernet0/1`) at `10.100.2.10/24` and the inside interface (`GigabitEthernet0/2`) at `10.100.3.10/24`. Confirms FTDv picked up the right Day-0 IPs and that NIC ordering is correct.
 
 ## When it gets stuck
 
