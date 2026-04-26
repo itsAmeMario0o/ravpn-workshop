@@ -23,17 +23,19 @@ Look at the gap between Current and Limit. If either family has less than 8 vCPU
 Cisco publishes both images through the Azure Marketplace. Each image has terms you must accept once per subscription before Terraform can deploy a VM that uses it.
 
 ```bash
-az vm image terms accept --publisher cisco --offer cisco-ftdv --plan ftdv-azure-byol
-az vm image terms accept --publisher cisco --offer cisco-ise-virtual --plan cisco-ise_3_4
+az vm image terms accept --publisher cisco --offer cisco-ftdv --plan cisco-ftdv-x86-byol
+az vm image terms accept --publisher cisco --offer cisco-ise-virtual --plan cisco-ise_3_5
 ```
+
+A note on the FTDv plan name: Cisco publishes FTD 10.x under `cisco-ftdv-x86-byol` (and `-x86-payg`). The older `ftdv-azure-byol` plan only publishes 7.x and earlier. Pick the x86 variant for 10.x.
 
 The FTDv image is BYOL (Bring Your Own License). Smart Licensing handles the actual license activation later, after the device registers with cdFMC.
 
 ## Verify
 
 ```bash
-az vm image terms show --publisher cisco --offer cisco-ftdv --plan ftdv-azure-byol --query accepted
-az vm image terms show --publisher cisco --offer cisco-ise-virtual --plan cisco-ise_3_4 --query accepted
+az vm image terms show --publisher cisco --offer cisco-ftdv --plan cisco-ftdv-x86-byol --query accepted
+az vm image terms show --publisher cisco --offer cisco-ise-virtual --plan cisco-ise_3_5 --query accepted
 ```
 
 Both must return `true`. If either is `false`, Terraform will fail with a marketplace acceptance error.

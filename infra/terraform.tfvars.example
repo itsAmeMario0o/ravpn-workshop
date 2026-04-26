@@ -8,13 +8,13 @@ vnet_address_space   = "10.100.0.0/16"
 ftdv_admin_password = "REPLACE-ME-strong-password"
 ftdv_reg_key        = "REPLACE-ME-from-SCC"
 ftdv_nat_id         = "REPLACE-ME-from-SCC"
-ftdv_image_plan     = "ftdv-azure-byol"
+ftdv_image_plan     = "cisco-ftdv-x86-byol"
 ftdv_image_version  = "latest"
 
 # ISE bootstrap.
 ise_admin_password = "REPLACE-ME-strong-password"
 ise_dns_domain     = "ravpn.local"
-ise_image_plan     = "cisco-ise_3_4"
+ise_image_plan     = "cisco-ise_3_5"
 ise_image_version  = "latest"
 
 # Trading app VM admin.

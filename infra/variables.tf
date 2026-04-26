@@ -58,17 +58,17 @@ variable "app_admin_ssh_public_key" {
 }
 
 variable "ftdv_image_plan" {
-  description = "Cisco FTDv marketplace plan: ftdv-azure-byol or ftdv-azure-payg."
+  description = "Cisco FTDv 10.x marketplace plan: cisco-ftdv-x86-byol or cisco-ftdv-x86-payg."
   type        = string
-  default     = "ftdv-azure-byol"
+  default     = "cisco-ftdv-x86-byol"
   validation {
-    condition     = contains(["ftdv-azure-byol", "ftdv-azure-payg"], var.ftdv_image_plan)
-    error_message = "Plan must be ftdv-azure-byol or ftdv-azure-payg."
+    condition     = contains(["cisco-ftdv-x86-byol", "cisco-ftdv-x86-payg"], var.ftdv_image_plan)
+    error_message = "Plan must be cisco-ftdv-x86-byol or cisco-ftdv-x86-payg."
   }
 }
 
 variable "ftdv_image_version" {
-  description = "FTDv image version. Pin to a specific 10.x build."
+  description = "FTDv image version. The 10.x SKUs publish 10.00.140 at time of writing."
   type        = string
   default     = "latest"
 }
@@ -76,7 +76,7 @@ variable "ftdv_image_version" {
 variable "ise_image_plan" {
   description = "Cisco ISE marketplace plan: cisco-ise_3_4 or cisco-ise_3_5."
   type        = string
-  default     = "cisco-ise_3_4"
+  default     = "cisco-ise_3_5"
   validation {
     condition     = contains(["cisco-ise_3_4", "cisco-ise_3_5"], var.ise_image_plan)
     error_message = "Plan must be cisco-ise_3_4 or cisco-ise_3_5."

@@ -3,11 +3,10 @@ locals {
     AdminPassword = var.admin_password
     Hostname      = "ftdv-ravpn"
     ManageLocally = "No"
-    FmcIpAddress  = "DONTRESOLVE"
+    Diagnostic    = "OFF"
+    FmcIp         = "DONTRESOLVE"
     FmcRegKey     = var.reg_key
     FmcNatId      = var.nat_id
-    Diagnostic    = "OFF"
-    FirewallMode  = "Routed"
   })
 }
 

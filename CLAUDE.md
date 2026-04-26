@@ -728,9 +728,9 @@ Subject under 70 characters. Imperative mood. No trailing period.
 
 - Publisher: `cisco`
 - Offer: `cisco-ftdv`
-- Plan: `ftdv-azure-byol` or `ftdv-azure-payg`
-- Accept terms: `az vm image terms accept --publisher cisco --offer cisco-ftdv --plan ftdv-azure-byol`
-- Custom Data: JSON, base64-encoded. Fields: AdminPassword, Hostname, ManageLocally (No), FmcIpAddress (DONTRESOLVE), FmcRegKey, FmcNatId, Diagnostic (OFF), FirewallMode (Routed).
+- Plan: `cisco-ftdv-x86-byol` or `cisco-ftdv-x86-payg` (FTD 10.x SKUs; the older `ftdv-azure-byol`/`ftdv-azure-payg` SKUs only publish 7.x and earlier)
+- Accept terms: `az vm image terms accept --publisher cisco --offer cisco-ftdv --plan cisco-ftdv-x86-byol`
+- Custom Data: JSON, base64-encoded. Fields: AdminPassword, Hostname, ManageLocally (No), Diagnostic (OFF), FmcIp (DONTRESOLVE), FmcRegKey, FmcNatId. The FmcIp field is named exactly that in 10.x (not FmcIpAddress). FirewallMode is not a documented 10.x customData field.
 - NIC order is fixed: Nic0=Management, Nic1=Gi0/0 (diagnostic), Nic2=Gi0/1 (outside), Nic3=Gi0/2 (inside).
 - VM generation: Gen 1 only.
 - FTD 10.x requires Dsv3 or Fsv2 families. Dv2 is not supported on 10.x.
@@ -739,8 +739,8 @@ Subject under 70 characters. Imperative mood. No trailing period.
 
 - Publisher: `cisco`
 - Offer: `cisco-ise-virtual`
-- Plan: `cisco-ise_3_4` (check for 3.5 availability)
-- Accept terms: `az vm image terms accept --publisher cisco --offer cisco-ise-virtual --plan cisco-ise_3_4`
+- Plan: `cisco-ise_3_5` (3.4 also available; 3.5 is current as of this writing)
+- Accept terms: `az vm image terms accept --publisher cisco --offer cisco-ise-virtual --plan cisco-ise_3_5`
 - User Data: key=value plaintext, base64-encoded. Fields: hostname, primarynameserver (168.63.129.16), dnsdomain, ntpserver, timezone, password, ersapi=yes, openapi=yes, pxGrid=yes, pxgrid_cloud=yes.
 - Standard_D8s_v4 for Extra Small PSN-only deployment.
 - 300 GB minimum disk.
