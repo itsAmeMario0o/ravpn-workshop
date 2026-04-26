@@ -8,6 +8,15 @@ This file aligns with the build priority tiers, the definition-of-done table, an
 
 The schedule is shaped by three slow things: FTDv first boot is around 20 minutes, ISE first boot is 45 to 60 minutes, and Let's Encrypt DNS-01 challenges take 5 to 15 minutes to propagate. Marketplace term acceptance is a one-time gate. Build around the slow steps. Use the boot windows for unrelated work.
 
+## Current status
+
+- **Phase 0 - done.** Quota raised in eastus2, marketplace terms accepted for `cisco-ftdv-x86-byol` (FTD 10) and `cisco-ise_3_5`, region/SKU availability confirmed.
+- **Phase 2 (Terraform) and Phase 3 prep (React app) - code complete and validated**, not yet applied. `terraform fmt` and `validate` clean. App `tsc`/`eslint`/`vitest` clean.
+- **Phase 7 (pre-commit + CI) - done.** Hooks pass, GitHub Actions wired.
+- **Phase 8 (setup guides) - done.** Plain-language pass applied.
+- **Phase 1 (DNS, Entra, certs) - blocked on hands-on work** (Cloudflare records, Entra config, cert generation).
+- **Phases 4-6 and 9 - pending the live deploy.**
+
 ---
 
 ## Phase 0 — Pre-flight (h-1 → h0, ~30 min)
@@ -37,19 +46,23 @@ The schedule is shaped by three slow things: FTDv first boot is around 20 minute
 Parallelizable in pairs:
 
 1. Cloudflare A records: `vpn.rooez.com` and `trading.rooez.com` to placeholder `1.1.1.1`. DNS only (gray cloud).
-2. Entra ID: add `rooez.com` custom domain, create `trader1@rooez.com`, register Microsoft Authenticator, create Enterprise App for ZTAA SAML, create App Registration for ISE REST ID with ROPC permissions.
-3. Let's Encrypt SAN cert via certbot DNS-01 + Cloudflare plugin.
+2. Entra ID: add `rooez.com` custom domain, create `trader1@rooez.com`, register Microsoft Authenticator, create Enterprise App for ZTAA SAML (download the Federation Metadata XML — that's where the SAML IdP cert lives), create App Registration for ISE REST ID with ROPC permissions.
+3. Let's Encrypt SAN cert via certbot DNS-01 + Cloudflare plugin (`scripts/generate-certs.sh`). This is the identity cert, what Cisco Secure Client and the browser see.
+4. Self-signed application cert (`scripts/generate-app-cert.sh`). This is the cert FTDv uses for backend TLS to the trading app, also uploaded to cdFMC as an Internal Cert. Generated locally so the same pair lands on both the app VM and in cdFMC.
 
 **Tests:**
 
 - [ ] `dig vpn.rooez.com` and `dig trading.rooez.com` resolve from a public resolver.
 - [ ] `openssl x509 -in fullchain.pem -text` shows both SANs.
+- [ ] `openssl x509 -in certs/app/trading.crt -noout -subject` shows `CN=trading-internal`.
 - [ ] Sign in to Entra as `trader1@rooez.com` and complete MFA enrollment.
 
 **Validation gate:**
 
 - [ ] DNS resolves to placeholder.
-- [ ] Cert covers both SANs, expiry > 60 days.
+- [ ] Identity cert (Let's Encrypt) covers both SANs, expiry > 60 days.
+- [ ] Application cert (self-signed) and key both exist under `certs/app/`.
+- [ ] Federation Metadata XML downloaded from the Entra Enterprise App.
 - [ ] `trader1` can sign in and MFA prompts work.
 - [ ] App Registration client secret saved in a password manager.
 
@@ -174,9 +187,13 @@ Access control policy, NAT for outside, route to inside subnet for app reachabil
 
 ### 5e. ZTAA (h12 → h13)
 
-- [ ] SSO Server Object pointing at Entra Enterprise App. Replace `[AppGroupName]` placeholder with real value.
-- [ ] Application Group with `trading.rooez.com/ztaa` as protected app, FTDv as enforcement point.
-- [ ] Bind cert.
+ZTAA needs all three certs in cdFMC at once. Upload them before creating the application group, otherwise the wizard rejects the binding.
+
+- [ ] **Identity cert** uploaded at `Devices > Certificates > Add` as PKCS12 (the Let's Encrypt fullchain + privkey, packaged with `openssl pkcs12 -export`). Check SSL Client and SSL Server.
+- [ ] **SAML IdP cert** uploaded at `Devices > Certificates > Manual enrollment` with CA Only enabled. Source: the X509Certificate inside the Federation Metadata XML you downloaded from the Entra Enterprise App.
+- [ ] **Application cert** uploaded at `Objects > Object Management > PKI > Internal Certs > Add` with both `certs/app/trading.crt` and `certs/app/trading.key` from your laptop.
+- [ ] SSO Server Object pointing at the Entra Enterprise App. Replace `[AppGroupName]` placeholder with the real Application Group name. The two strings (Entra Entity ID, cdFMC SSO Server) must match exactly.
+- [ ] Application Group with `trading.rooez.com/ztaa` as the protected app and FTDv as the enforcement point. Bind the identity cert to the group and the application cert to the protected app.
 
 **Tests (per sub-phase, smallest unit first):**
 
