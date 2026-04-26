@@ -1,4 +1,4 @@
-title = "JPMC RAVPN Demo - Gitleaks Config"
+title = "RAVPN Workshop - Gitleaks Config"
 
 [allowlist]
 description = "Allowlisted patterns"

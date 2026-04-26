@@ -1,6 +1,6 @@
 # 24-hour execution plan
 
-Phase-based plan for the JPMC RAVPN demo build. Each phase has a goal, deliverables, validation gate, and recovery path.
+Phase-based plan for the RAVPN workshop build. Each phase has a goal, deliverables, validation gate, and recovery path.
 
 Aligns with the build priority tiers, Definition of done table, and Verification checklist in `CLAUDE.md`. The detailed architecture lives in `azure-demo-plan.md`.
 
@@ -200,7 +200,7 @@ Access control policy, NAT for outside, route to inside subnet for app reachabil
 
 - [ ] Disconnect VPN, close browser, clear cookies.
 - [ ] Walk every checkbox in the verification table.
-- [ ] Run the demo script you will use in front of JPMC at least once, top to bottom.
+- [ ] Run the demo script you will use in front of the audience at least once, top to bottom.
 - [ ] Time each demo block — flag any that exceed the workshop's per-section budget.
 
 **Validation gate:**

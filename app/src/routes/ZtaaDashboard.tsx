@@ -21,7 +21,7 @@ export function ZtaaDashboard() {
         <PortfolioSummary variant="light" />
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2">
-            <PriceChart variant="light" symbol="JPM" seed={11} />
+            <PriceChart variant="light" symbol="ACME" seed={11} />
           </div>
           <PositionsTable variant="light" />
         </div>

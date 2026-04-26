@@ -21,7 +21,7 @@ export function VpnDashboard() {
         <PortfolioSummary variant="dark" />
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2">
-            <PriceChart variant="dark" symbol="JPM" seed={11} />
+            <PriceChart variant="dark" symbol="ACME" seed={11} />
           </div>
           <PositionsTable variant="dark" />
         </div>

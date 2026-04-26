@@ -1,6 +1,6 @@
 # Setup walkthrough
 
-Build the JPMC RAVPN demo from scratch. Each step has a verify subsection. If verify fails, fix before moving on.
+Build the RAVPN workshop environment from scratch. Each step has a verify subsection. If verify fails, fix before moving on.
 
 ## Sequence
 

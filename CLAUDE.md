@@ -1,6 +1,6 @@
-# JPMC RAVPN Demo Environment
+# RAVPN Workshop
 
-Claude Code instructions for the Azure FTDv RAVPN demo build repo.
+Claude Code instructions for the Azure FTDv RAVPN workshop build repo.
 
 ---
 
@@ -16,7 +16,7 @@ For the canonical architecture details, see `azure-demo-plan.md` (workspace root
 
 ## What this repo builds
 
-A single-site Azure demo environment for the JPMC PoV workshop. Four live demos, one conceptual overview.
+A single-site Azure demo environment for the RAVPN workshop. Four live demos, one conceptual overview.
 
 **RAVPN:** Secure Client connects to FTDv, authenticates through ISE (RADIUS) backed by Microsoft Entra ID (REST ID/ROPC). User reaches a fictitious trading dashboard (dark theme, `/vpn` route). Tunnel required for access.
 
@@ -26,7 +26,7 @@ A single-site Azure demo environment for the JPMC PoV workshop. Four live demos,
 
 **cdFMC VPN dashboard:** Real-time session monitoring, connection analytics, tunnel status, geographic distribution, Secure Client version inventory. Passive demo element during active RAVPN sessions.
 
-**Multi-instance (conceptual):** Not deployed. Whiteboard discussion covering FTD multi-instance on Firepower 4100/4200 for workload isolation and blue-green upgrades. Presented as a future use case for JPMC's multi-tenant VPN architecture.
+**Multi-instance (conceptual):** Not deployed. Whiteboard discussion covering FTD multi-instance on Firepower 4100/4200 for workload isolation and blue-green upgrades. Presented as a future use case for multi-tenant VPN architectures.
 
 ---
 
@@ -88,7 +88,7 @@ Internet
 ## Project structure
 
 ```
-jpmc-ravpn-demo/
+ravpn-workshop/
 |
 +-- CLAUDE.md                    <-- This file
 +-- .gitignore
@@ -427,7 +427,7 @@ repos:
 Create `.gitleaks.toml` at the repo root:
 
 ```toml
-title = "JPMC RAVPN Demo - Gitleaks Config"
+title = "RAVPN Workshop - Gitleaks Config"
 
 [allowlist]
 description = "Allowlisted patterns"
@@ -600,15 +600,15 @@ updates:
 
 The `docs/` folder is the source for a Jekyll site deployed to GitHub Pages. This is the public-facing documentation site for the PoV.
 
-**Purpose:** Host demo documentation, RAVPN notes, multi-instance notes, automation notes. Link to Cisco documentation as supporting references. Provide a reference site the JPMC team can bookmark.
+**Purpose:** Host demo documentation, RAVPN notes, multi-instance notes, automation notes. Link to Cisco documentation as supporting references. Provide a reference site the audience can bookmark.
 
 ### Jekyll config (`docs/_config.yml`)
 
 ```yaml
-title: JPMC RAVPN Demo
+title: RAVPN Workshop
 description: FTDv Remote Access VPN demo environment documentation
 theme: minima
-baseurl: "/jpmc-ravpn-demo"
+baseurl: "/ravpn-workshop"
 url: ""
 markdown: kramdown
 plugins:
@@ -617,7 +617,7 @@ plugins:
 
 ### Page structure
 
-Each page follows a consistent structure: what the feature is, why it matters for JPMC, how the demo proves it. Apply the humanizer skill and writing standards to all page content before committing.
+Each page follows a consistent structure: what the feature is, why it matters, how the demo proves it. Apply the humanizer skill and writing standards to all page content before committing.
 
 ---
 

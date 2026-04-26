@@ -2,7 +2,7 @@
 
 _Last updated: 2026-04-24_
 _Status: Planning. No resources deployed._
-_Sources: FTDv Getting Started Guide (7.2 and earlier), Azure FTDv deployment guide, FMC admin guide, FTD RAVPN admin guide, Microsoft Learn (Dv2 series, NVA docs, Accelerated Networking), JPMC NGVPN HLD v1.4, JPMC NGVPN LLD v0.13_
+_Sources: FTDv Getting Started Guide (7.2 and earlier), Azure FTDv deployment guide, FMC admin guide, FTD RAVPN admin guide, Microsoft Learn (Dv2 series, NVA docs, Accelerated Networking), internal NGVPN HLD and LLD references_
 
 ---
 
@@ -16,9 +16,9 @@ Demo scope:
 2. Zero Trust Application Access (ZTAA) with SAML authentication through Microsoft Entra ID + MFA (Microsoft Authenticator), accessing a second trading dashboard app (different color scheme, same layout)
 3. cdFMC VPN dashboard: real-time session monitoring, connection analytics, tunnel status
 4. Geolocation VPN: policy-based tunnel steering by client geographic location
-5. Multi-instance introduction: conceptual overview of FTD multi-instance on Firepower 4200 for workload isolation (not deployed in this demo, presented as a future use case for JPMC's multi-tenant VPN architecture)
+5. Multi-instance introduction: conceptual overview of FTD multi-instance on Firepower 4200 for workload isolation (not deployed in this demo, presented as a future use case for multi-tenant VPN architectures)
 
-This environment supports the JPMC PoV workshop (Section 4: RAVPN primitives, Section 5: SAML, Section 6: Geolocation VPN, Section 7: ZTAA, Section 9: Automation/ZTP).
+This environment supports the PoV workshop (Section 4: RAVPN primitives, Section 5: SAML, Section 6: Geolocation VPN, Section 7: ZTAA, Section 9: Automation/ZTP).
 
 ### Demo assumptions
 
@@ -205,7 +205,7 @@ JSON payload passed via the Azure VM Custom Data field during deployment:
 ```json
 {
   "AdminPassword": "<strong-password>",
-  "Hostname": "ftdv-demo-jpmc",
+  "Hostname": "ftdv-demo",
   "FirewallMode": "Routed",
   "ManageLocally": "No",
   "FmcIpAddress": "DONTRESOLVE",
@@ -256,7 +256,7 @@ After FTDv is registered and initial policy deployed:
 | 2 | Identity certificate | SSL certificate for the outside interface (Secure Client TLS handshake). Options: (a) Let's Encrypt cert for `vpn.rooez.com` via DNS-01/Cloudflare (clean, no warnings), or (b) self-signed (Secure Client warns on first connect, then trusts). See "TLS certificate generation" section. |
 | 3 | Secure Client package | Upload .pkg web-deploy image to cdFMC. Objects > Object Management > VPN > AnyConnect File. Pre-deploy images do not work. |
 | 4 | Address pool | Create an IPv4 address pool for VPN clients (e.g., 10.100.200.0/24). |
-| 5 | Authentication | ISE as RADIUS server. ISE authenticates against Entra ID via REST ID (ROPC). FTD sends RADIUS to ISE, ISE validates credentials against Entra, returns RADIUS Accept with authorization attributes. Mirrors JPMC's production auth model (FTD > ISE > identity source). |
+| 5 | Authentication | ISE as RADIUS server. ISE authenticates against Entra ID via REST ID (ROPC). FTD sends RADIUS to ISE, ISE validates credentials against Entra, returns RADIUS Accept with authorization attributes. Mirrors common production auth models (FTD > ISE > identity source). |
 | 6 | Connection profile | Use the RAVPN wizard in cdFMC. Assigns: Secure Client image, group policy, address pool, auth method, certificate, interface. |
 | 7 | Group policy | Define split-tunnel or full-tunnel, DNS servers, default domain, banner. |
 | 8 | NAT exemption | Exempt VPN pool from outbound NAT (inside source to VPN pool). Or use `sysopt permit-vpn` to bypass ACL for decrypted traffic. |
@@ -285,7 +285,7 @@ Requirements: FTD 7.4+, Snort 3, routed mode. All met by this demo environment.
 ZTAA key points for the workshop:
 - SAML-only authentication. No RADIUS, no LDAP.
 - MFA enforced upstream in Entra (Microsoft Authenticator push).
-- Eliminates RADIUS for post-logon app access (aligns with JPMC IAM direction).
+- Eliminates RADIUS for post-logon app access (aligns with modern IAM direction).
 - FTD is the enforcement point. IdP is Entra ID (cloud), but on-prem IdPs also supported.
 - Per-app scoped access. Authenticating to one app does not grant access to others.
 - FTD performs TLS decryption and applies IPS/malware inspection to the brokered traffic.
@@ -460,10 +460,10 @@ Key dashboard views to show:
 | View | What it shows | Workshop relevance |
 |---|---|---|
 | Active sessions | Connected users, assigned IPs, tunnel protocol (SSL/DTLS/IKEv2), duration, bytes transferred | Replaces ASA `show vpn-sessiondb` CLI. Centralized view across all managed FTDs. |
-| Connection profile summary | Sessions grouped by connection profile (tunnel group) | Maps to JPMC's multi-use-case model (UC1-UC8). Each use case gets its own connection profile. |
+| Connection profile summary | Sessions grouped by connection profile (tunnel group) | Maps to a typical multi-use-case model. Each use case gets its own connection profile. |
 | Geographic distribution | Session origin by country/region (if geolocation data available) | Ties directly to geolocation VPN demo. |
-| Throughput and trends | Historical session counts, bandwidth consumption | Capacity planning context for JPMC's 160K endpoint target. |
-| Secure Client version | Client software versions across active sessions | Relevant to JPMC's AnyConnect-to-Secure-Client migration. |
+| Throughput and trends | Historical session counts, bandwidth consumption | Capacity planning context for large-scale endpoint deployments. |
+| Secure Client version | Client software versions across active sessions | Relevant to AnyConnect-to-Secure-Client migrations. |
 
 The dashboard eliminates the need for CLI-based monitoring and provides the centralized multi-device visibility that CSM (now end-of-life) never offered for VPN sessions.
 
@@ -493,7 +493,7 @@ Show the policy configuration in cdFMC, connect from two locations (or simulate 
 | Connection profile assignment | Secure Client XML profile can use `<AutomaticVPNPolicy>` with geolocation awareness, or FTD can apply group policy overrides based on source geo. |
 | Dashboard correlation | cdFMC VPN dashboard shows geographic distribution of active sessions, providing visual confirmation of the policy effect. |
 
-This maps to workshop Section 6 (Geolocation VPN) and addresses JPMC's global topology (11 data centers across NA, EMEA, APAC).
+This maps to workshop Section 6 (Geolocation VPN) and addresses global topologies (multi-region across NA, EMEA, APAC).
 
 [from notebook source: FTD RAVPN admin guide, geolocation RAVPN doc]
 
@@ -501,15 +501,15 @@ This maps to workshop Section 6 (Geolocation VPN) and addresses JPMC's global to
 
 ## Multi-instance introduction (conceptual, not deployed)
 
-Multi-instance is not deployed in this demo environment. It is introduced as a conceptual overview during the workshop to frame a future use case for JPMC's multi-tenant VPN architecture.
+Multi-instance is not deployed in this demo environment. It is introduced as a conceptual overview during the workshop to frame a future use case for multi-tenant VPN architectures.
 
 ### What multi-instance provides
 
 FTD multi-instance on Firepower 4200 series appliances allows multiple independent FTD instances on a single chassis, each with its own configuration, policies, interfaces, and management. Each instance operates as an isolated firewall with dedicated CPU, memory, and interface allocation.
 
-### Relevance to JPMC
+### Production relevance
 
-JPMC runs three environments (PROD, ENG, UAT) on separate physical appliances today. Multi-instance on FP4200 could consolidate these onto fewer chassis with hardware-level isolation between instances. Each instance registers independently to FMC/cdFMC and receives its own policy set.
+Many large enterprises run three environments (PROD, ENG, UAT) on separate physical appliances today. Multi-instance on FP4200 could consolidate these onto fewer chassis with hardware-level isolation between instances. Each instance registers independently to FMC/cdFMC and receives its own policy set.
 
 ### Workshop talking points
 
@@ -585,9 +585,9 @@ If the Entra tenant has tenant-wide MFA enforced (via security defaults or Condi
 
 If tenant-wide MFA is not enforced, no Conditional Access policy is needed. ROPC works without MFA by default.
 
-### Production path for JPMC (MFA on RAVPN)
+### Production path (MFA on RAVPN)
 
-If JPMC requires MFA on the RAVPN path in production, ROPC is not viable. Alternatives:
+If MFA on the RAVPN path is required in production, ROPC is not viable. Alternatives:
 
 | Alternative | How it works | Avoids ROPC? | MFA compatible? |
 |---|---|---|---|
@@ -595,7 +595,7 @@ If JPMC requires MFA on the RAVPN path in production, ROPC is not viable. Altern
 | SAML for portal flows | Captive portal or clientless. Not applicable to Secure Client machine-tunnel. | Yes | Yes |
 | Duo External MFA via Entra | Route MFA through Duo integrated with Entra. Adds complexity. | No (still ROPC for primary auth) | Partial (Duo handles MFA separately) |
 
-EAP-TLS/TEAP aligns with JPMC's existing PKI/MDM cert auth architecture and is the strongest production option.
+EAP-TLS/TEAP aligns with existing PKI/MDM cert auth architectures and is the strongest production option.
 
 ---
 
@@ -609,7 +609,7 @@ DNS for inside VMs uses Azure-provided DNS (168.63.129.16). No custom DNS server
 
 ## ISEv PSN node
 
-ISE adds RADIUS authentication, posture assessment, and CoA to the demo. It is the most realistic representation of JPMC's production architecture (FTD + ISE + AD).
+ISE adds RADIUS authentication, posture assessment, and CoA to the demo. It is the most realistic representation of a production architecture (FTD + ISE + AD).
 
 ### Platform support
 
@@ -826,7 +826,7 @@ The live demo assumes all infrastructure is pre-built. The audience sees FTD con
 
 1. With one or more Secure Client sessions active, navigate to the cdFMC RAVPN dashboard.
 2. Walk through active sessions: user, IP, tunnel protocol, duration, bytes.
-3. Show connection profile grouping (maps to JPMC's use cases UC1-UC8).
+3. Show connection profile grouping (maps to typical multi-use-case models).
 4. Show geographic distribution view (sets up Block 3).
 5. Show throughput trends and Secure Client version inventory.
 
@@ -836,7 +836,7 @@ The live demo assumes all infrastructure is pre-built. The audience sees FTD con
 2. Create or show a pre-built access control rule that applies a different group policy based on client origin.
 3. Connect from two locations (or simulate with a second Azure region endpoint) to demonstrate geo-based policy differentiation.
 4. Return to the VPN dashboard geographic view. Confirm sessions appear with correct location data.
-5. Discuss implications for JPMC's global topology (NA, EMEA, APAC routing decisions).
+5. Discuss implications for global topologies (NA, EMEA, APAC routing decisions).
 
 ### Block 4: ZTAA with Entra ID SAML + MFA (live in cdFMC)
 
@@ -853,6 +853,6 @@ The live demo assumes all infrastructure is pre-built. The audience sees FTD con
 
 1. No configuration shown. This is a whiteboard/slide discussion.
 2. Explain multi-instance on FP4200: multiple independent FTD instances per chassis.
-3. Map to JPMC's current three-environment model (PROD/ENG/UAT). Each environment becomes its own instance on shared hardware.
+3. Map to a typical three-environment model (PROD/ENG/UAT). Each environment becomes its own instance on shared hardware.
 4. Highlight: hardware-level isolation, independent cdFMC registration, separate policy sets, dedicated resource allocation.
 5. Note: multi-instance is not available on FTDv. Requires physical 4200 hardware. This is a future phase discussion, not a PoV deliverable.

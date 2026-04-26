@@ -1,19 +1,19 @@
 import type { Position, PricePoint, Quote } from "../types";
 
 export const watchlist: Quote[] = [
-  { symbol: "JPM", name: "JPMorgan Chase", price: 248.71, change: 1.84, changePercent: 0.74 },
-  { symbol: "GS", name: "Goldman Sachs", price: 612.39, change: -3.14, changePercent: -0.51 },
-  { symbol: "MS", name: "Morgan Stanley", price: 142.06, change: 0.92, changePercent: 0.65 },
-  { symbol: "BAC", name: "Bank of America", price: 47.18, change: 0.21, changePercent: 0.45 },
-  { symbol: "C", name: "Citigroup", price: 79.84, change: -0.55, changePercent: -0.69 },
-  { symbol: "WFC", name: "Wells Fargo", price: 76.92, change: 1.12, changePercent: 1.48 },
+  { symbol: "ACME", name: "Acme Industries", price: 248.71, change: 1.84, changePercent: 0.74 },
+  { symbol: "NOVA", name: "Nova Holdings", price: 612.39, change: -3.14, changePercent: -0.51 },
+  { symbol: "AXIS", name: "Axis Capital", price: 142.06, change: 0.92, changePercent: 0.65 },
+  { symbol: "ORBIT", name: "Orbit Group", price: 47.18, change: 0.21, changePercent: 0.45 },
+  { symbol: "HELIX", name: "Helix Systems", price: 79.84, change: -0.55, changePercent: -0.69 },
+  { symbol: "FORGE", name: "Forge Partners", price: 76.92, change: 1.12, changePercent: 1.48 },
 ];
 
 export const positions: Position[] = [
-  { symbol: "JPM", shares: 850, avgCost: 198.42, marketValue: 211403.5, unrealizedPl: 42738.0 },
-  { symbol: "GS", shares: 220, avgCost: 540.18, marketValue: 134725.8, unrealizedPl: 15886.2 },
-  { symbol: "MS", shares: 1100, avgCost: 128.55, marketValue: 156266.0, unrealizedPl: 14861.0 },
-  { symbol: "BAC", shares: 4200, avgCost: 41.6, marketValue: 198156.0, unrealizedPl: 23436.0 },
+  { symbol: "ACME", shares: 850, avgCost: 198.42, marketValue: 211403.5, unrealizedPl: 42738.0 },
+  { symbol: "NOVA", shares: 220, avgCost: 540.18, marketValue: 134725.8, unrealizedPl: 15886.2 },
+  { symbol: "AXIS", shares: 1100, avgCost: 128.55, marketValue: 156266.0, unrealizedPl: 14861.0 },
+  { symbol: "ORBIT", shares: 4200, avgCost: 41.6, marketValue: 198156.0, unrealizedPl: 23436.0 },
 ];
 
 export function generateChartSeries(seed: number, points = 90): PricePoint[] {
