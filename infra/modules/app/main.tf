@@ -14,6 +14,34 @@
 # B1s is intentionally tiny - the app is static files served by nginx,
 # so a 1 vCPU / 1 GB RAM VM is plenty.
 
+# SSH keypair for the trading app VM. Generated at apply time so users
+# don't have to bring their own. The Ed25519 algorithm is the modern
+# default - faster, smaller, more secure than RSA.
+#
+# Both files land at the repo root in keys/. The directory is gitignored.
+# After apply, you can SSH with: ssh -i keys/ravpn_workshop appadmin@<ip>
+#
+# Trade-off: the private key lives in terraform.tfstate (gitignored). For
+# a workshop on a personal laptop, that's acceptable. For production you
+# would use Azure Key Vault or a Vault provider instead.
+resource "tls_private_key" "this" {
+  algorithm = "ED25519"
+}
+
+resource "local_sensitive_file" "private_key" {
+  content              = tls_private_key.this.private_key_openssh
+  filename             = "${path.root}/../keys/ravpn_workshop"
+  file_permission      = "0600"
+  directory_permission = "0700"
+}
+
+resource "local_file" "public_key" {
+  content              = tls_private_key.this.public_key_openssh
+  filename             = "${path.root}/../keys/ravpn_workshop.pub"
+  file_permission      = "0644"
+  directory_permission = "0700"
+}
+
 # Cloud-init: minimal first-boot config. Installs nginx and openssl,
 # enables and starts nginx. The actual nginx site config and the React
 # build come later via scripts/deploy-trading-app.sh.
@@ -62,7 +90,7 @@ resource "azurerm_linux_virtual_machine" "this" {
 
   admin_ssh_key {
     username   = var.admin_username
-    public_key = var.admin_ssh_public_key
+    public_key = tls_private_key.this.public_key_openssh
   }
 
   custom_data = base64encode(local.cloud_init)

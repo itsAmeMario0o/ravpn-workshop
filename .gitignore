@@ -19,6 +19,7 @@ cloudflare.ini
 **/secrets/
 **/credentials/
 certs/
+keys/
 
 # SAML federation metadata files contain IdP cert and tenant URLs.
 # Treated as sensitive even though they are technically public-issuable.

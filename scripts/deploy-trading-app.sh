@@ -6,18 +6,22 @@ set -euo pipefail
 # a self-signed cert (for backend TLS to ZTAA enforcement).
 #
 # Required env vars:
+#   None - all defaults assume the standard deploy.
+#
+# Optional overrides:
 #   RG                 Resource group name (default: rg-ravpn-demo)
 #   APP_VM             App VM name (default: vm-tradingapp)
-#   APP_USER           SSH user on the app VM
+#   APP_USER           SSH user on the app VM (default: appadmin)
 #   BASTION            Bastion name (default: bastion-demo)
 #   APP_PRIVATE_IP     App VM private IP (default: 10.100.3.20)
+#   SSH_KEY            Path to the SSH private key (default: keys/ravpn_workshop)
 #
 # Usage:
 #   scripts/deploy-trading-app.sh
 
 RG="${RG:-rg-ravpn-demo}"
 APP_VM="${APP_VM:-vm-tradingapp}"
-APP_USER="${APP_USER:?APP_USER must be set}"
+APP_USER="${APP_USER:-appadmin}"
 BASTION="${BASTION:-bastion-demo}"
 APP_PRIVATE_IP="${APP_PRIVATE_IP:-10.100.3.20}"
 TUNNEL_PORT="${TUNNEL_PORT:-50022}"
@@ -27,11 +31,17 @@ APP_DIR="${REPO_ROOT}/app"
 DIST_DIR="${APP_DIR}/dist"
 APP_CERT="${REPO_ROOT}/certs/app/trading.crt"
 APP_KEY="${REPO_ROOT}/certs/app/trading.key"
+SSH_KEY="${SSH_KEY:-${REPO_ROOT}/keys/ravpn_workshop}"
 
 log() { echo "[$1] $2"; }
 
 if [[ ! -f "${APP_CERT}" || ! -f "${APP_KEY}" ]]; then
   log ERROR "app cert pair missing. run scripts/generate-app-cert.sh first."
+  exit 1
+fi
+
+if [[ ! -f "${SSH_KEY}" ]]; then
+  log ERROR "ssh key missing at ${SSH_KEY}. did 'terraform apply' run successfully?"
   exit 1
 fi
 
@@ -53,8 +63,8 @@ TUNNEL_PID=$!
 trap 'kill "${TUNNEL_PID}" 2>/dev/null || true' EXIT
 sleep 5
 
-SSH_OPTS="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p ${TUNNEL_PORT}"
-SCP_OPTS="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -P ${TUNNEL_PORT}"
+SSH_OPTS="-i ${SSH_KEY} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p ${TUNNEL_PORT}"
+SCP_OPTS="-i ${SSH_KEY} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -P ${TUNNEL_PORT}"
 
 log INFO "preparing remote directories..."
 ssh ${SSH_OPTS} "${APP_USER}@127.0.0.1" "sudo mkdir -p /var/www/trading && sudo chown -R ${APP_USER}:${APP_USER} /var/www/trading"

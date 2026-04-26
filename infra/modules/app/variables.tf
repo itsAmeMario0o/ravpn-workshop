@@ -18,11 +18,6 @@ variable "admin_username" {
   type        = string
 }
 
-variable "admin_ssh_public_key" {
-  description = "SSH public key for the admin user."
-  type        = string
-}
-
 variable "vm_size" {
   description = "Azure VM size for the trading app. B1s is sufficient for nginx + static React build."
   type        = string

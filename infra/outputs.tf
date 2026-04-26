@@ -34,3 +34,8 @@ output "bastion_name" {
   description = "Bastion resource name. Use with az network bastion tunnel."
   value       = module.bastion.bastion_name
 }
+
+output "app_ssh_key_path" {
+  description = "Local path to the generated SSH private key for the trading app VM. Use with: ssh -i <path> appadmin@<app_private_ip>."
+  value       = module.app.ssh_private_key_path
+}

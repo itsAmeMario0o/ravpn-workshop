@@ -7,3 +7,8 @@ output "vm_id" {
   description = "Trading app VM resource ID."
   value       = azurerm_linux_virtual_machine.this.id
 }
+
+output "ssh_private_key_path" {
+  description = "Local path to the generated SSH private key for the trading app VM."
+  value       = local_sensitive_file.private_key.filename
+}

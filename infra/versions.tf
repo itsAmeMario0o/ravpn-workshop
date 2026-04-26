@@ -18,5 +18,15 @@ terraform {
       source  = "hashicorp/random"
       version = "~> 3.6"
     }
+    # tls + local generate and write the trading app VM's SSH keypair at
+    # apply time. Saves you from having to hand over an existing public key.
+    tls = {
+      source  = "hashicorp/tls"
+      version = "~> 4.0"
+    }
+    local = {
+      source  = "hashicorp/local"
+      version = "~> 2.5"
+    }
   }
 }

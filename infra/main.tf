@@ -97,10 +97,9 @@ module "ise" {
 module "app" {
   source = "./modules/app"
 
-  resource_group_name  = azurerm_resource_group.this.name
-  location             = azurerm_resource_group.this.location
-  subnet_id            = module.network.inside_subnet_id
-  admin_username       = var.app_admin_username
-  admin_ssh_public_key = var.app_admin_ssh_public_key
-  tags                 = local.common_tags
+  resource_group_name = azurerm_resource_group.this.name
+  location            = azurerm_resource_group.this.location
+  subnet_id           = module.network.inside_subnet_id
+  admin_username      = var.app_admin_username
+  tags                = local.common_tags
 }
