@@ -16,8 +16,7 @@ rotate/
 ├── azure-ad/            Entra ID (Azure AD) service accounts
 │   ├── powershell/      PowerShell via the Microsoft.Graph SDK
 │   └── python/          Python via Microsoft Graph REST + MSAL
-├── ise/                 Cisco ISE internal admin users via ERS API (Python)
-└── fmc/                 Cisco FMC / cdFMC — see the README inside
+└── ise/                 Cisco ISE internal admin users via ERS API (Python)
 ```
 
 ## Which one applies?
@@ -26,10 +25,8 @@ The right tool depends on where the service account actually lives.
 
 | Account lives in | Use |
 |---|---|
-| Entra ID (most common when ISE/FMC use external auth) | `azure-ad/` |
+| Entra ID (most common when ISE uses external auth) | `azure-ad/` |
 | ISE local user store | `ise/` |
-| FMC / cdFMC local user store | See `fmc/README.md` — REST API path is not available; rotation is GUI-only or CLI-only on FMC. The recommended fix is to move the account to external auth (LDAP, RADIUS, SAML) so rotation happens in the IdP. |
-| FTD local user store | Same as FMC — managed through FMC, no direct API path |
 
 ## Why this matters in this demo
 

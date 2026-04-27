@@ -38,7 +38,7 @@
     password.
 
 .EXAMPLE
-    ./Rotate-EntraServiceAccountPassword.ps1 -UserPrincipalName "svc-fmc@rooez.com" -PasswordLength 64
+    ./Rotate-EntraServiceAccountPassword.ps1 -UserPrincipalName "svc-automation@rooez.com" -PasswordLength 64
 
     Same as above but with a 64-character password.
 
