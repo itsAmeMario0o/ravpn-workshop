@@ -49,6 +49,7 @@ Parallelizable in pairs:
 2. Entra ID: add `rooez.com` custom domain, create `trader1@rooez.com`, register Microsoft Authenticator, create Enterprise App for ZTAA SAML (download the Federation Metadata XML — that's where the SAML IdP cert lives), create App Registration for ISE REST ID with ROPC permissions.
 3. Let's Encrypt SAN cert via certbot DNS-01 + Cloudflare plugin (`scripts/generate-certs.sh`). This is the identity cert, what Cisco Secure Client and the browser see.
 4. Self-signed application cert (`scripts/generate-app-cert.sh`). This is the cert FTDv uses for backend TLS to the trading app, also uploaded to cdFMC as an Internal Cert. Generated locally so the same pair lands on both the app VM and in cdFMC.
+5. SCC pre-provisioning (`setup/scc-onboarding.md`). Create the pending FTDv record in Security Cloud Control. Critically, claim **Cisco Secure Client Premier** in addition to the TMC bundle (Threat, URL, Malware) — without that license claim, RAVPN and ZTAA stay disabled even in evaluation mode. Copy the reg key, NAT ID, and full `configure manager add` command. The reg key and NAT ID go into `terraform.tfvars`; the full command gets pasted into the FTD CLI in Phase 4.
 
 **Tests:**
 
@@ -65,6 +66,8 @@ Parallelizable in pairs:
 - [ ] Federation Metadata XML downloaded from the Entra Enterprise App.
 - [ ] `trader1` can sign in and MFA prompts work.
 - [ ] App Registration client secret saved in a password manager.
+- [ ] SCC has a pending `ftdv-ravpn` record with **Threat, URL, Malware, AND Cisco Secure Client Premier** licenses claimed.
+- [ ] Reg key, NAT ID, and full `configure manager add ...` command saved.
 
 **If fails:** identity is single-threaded — fix before infra phase.
 

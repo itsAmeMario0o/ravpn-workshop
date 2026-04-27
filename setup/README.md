@@ -15,10 +15,11 @@ Follow these in order. Each one ends with a Verify subsection. Do not skip to th
 3. [DNS config](dns-config.md) - Cloudflare A records.
 4. [TLS certs](tls-certs.md) - generate two certs locally: the Let's Encrypt identity cert (Cisco Secure Client and the browser see this) and the self-signed application cert (the firewall and the app's nginx use this for backend TLS). Run `scripts/generate-certs.sh` and `scripts/generate-app-cert.sh`.
 5. [Entra ID](entra-config.md) - demo user, MFA, Enterprise App (for ZTAA SAML), App Registration (for ISE REST ID). Also where you download the SAML IdP cert as part of the Federation Metadata XML.
-6. Terraform deploy - copy `infra/terraform.tfvars.example` to `infra/terraform.tfvars`, fill the values, then run `terraform init && terraform plan && terraform apply` from inside `infra/`.
-7. [cdFMC registration](cdFMC-registration.md) - SSH to FTDv through Bastion and register the device with cdFMC. After registration, upload all three certs to cdFMC: identity cert (Devices > Certificates, PKCS12), SAML IdP cert (Devices > Certificates, Manual + CA Only), application cert (Objects > PKI > Internal Certs).
-8. [ISE config](ise-config.md) - REST ID identity store, FTDv as a network access device, auth and authz policies.
-9. Trading app deploy - run `scripts/deploy-trading-app.sh` to build the React app and push it (along with the local application cert) to the VM.
+6. [SCC pre-provisioning](scc-onboarding.md) - create the pending FTDv record in Security Cloud Control, claim Cisco Secure Client Premier alongside TMC, copy the reg key and NAT ID for `terraform.tfvars`, and save the full `configure manager add` command for Phase 4.
+7. Terraform deploy - copy `infra/terraform.tfvars.example` to `infra/terraform.tfvars`, fill the values, then run `terraform init && terraform plan && terraform apply` from inside `infra/`.
+8. [cdFMC registration](cdFMC-registration.md) - SSH to FTDv through Bastion and run the `configure manager add` command from step 6. After registration, upload all three certs to cdFMC: identity cert (Devices > Certificates, PKCS12), SAML IdP cert (Devices > Certificates, Manual + CA Only), application cert (Objects > PKI > Internal Certs).
+9. [ISE config](ise-config.md) - REST ID identity store, FTDv as a network access device, auth and authz policies.
+10. Trading app deploy - run `scripts/deploy-trading-app.sh` to build the React app and push it (along with the local application cert) to the VM.
 
 ## Things that will trip you up
 

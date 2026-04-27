@@ -2,13 +2,16 @@
 
 The FTDv we just deployed knows nothing about its manager yet. This step connects it to cdFMC so policy, monitoring, and the VPN dashboard work.
 
+This is the FTDv-side half of registration. The SCC-side half — creating the pending device record, claiming licenses, generating the reg key and NAT ID — happens earlier in the build. See [scc-onboarding.md](scc-onboarding.md).
+
 There is one twist that catches people every time: the management interface on this FTDv has no public IP. The original Cisco docs assume management has Internet access. Ours does not. Before you can register, you tell FTDv to send sftunnel out the data interface (outside) instead. That is one extra command at the FTD CLI.
 
 ## Before you start
 
+- [SCC pre-provisioning is done](scc-onboarding.md). Pending device record exists in SCC, and you have the matching `configure manager add ...` command saved in your password manager.
 - Terraform deploy is complete. `vm-ftdv` is running.
 - Bastion is deployed and reachable.
-- You have the registration command and NAT ID from Security Cloud Control. The same values are in your `terraform.tfvars` (`ftdv_reg_key` and `ftdv_nat_id`); the FTD CLI will need the matching pair.
+- The reg key and NAT ID are already in your `terraform.tfvars` (`ftdv_reg_key` and `ftdv_nat_id`); the FTD CLI will need the matching pair when you paste `configure manager add`.
 
 ## 1. Wait for first boot
 
