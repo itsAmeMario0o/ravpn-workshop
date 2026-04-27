@@ -76,21 +76,39 @@ module "ftdv" {
   tags                 = local.common_tags
 }
 
-# ISE: the RADIUS server in the RAVPN flow. The firewall sends RADIUS
-# requests here; ISE checks credentials against Entra over OAuth ROPC and
-# returns Accept or Reject. Only reachable for admin through Bastion.
-module "ise" {
-  source = "./modules/ise"
-
-  resource_group_name = azurerm_resource_group.this.name
-  location            = azurerm_resource_group.this.location
-  subnet_id           = module.network.identity_subnet_id
-  admin_password      = var.ise_admin_password
-  dns_domain          = var.ise_dns_domain
-  image_plan          = var.ise_image_plan
-  image_version       = var.ise_image_version
-  tags                = local.common_tags
-}
+# ISE: the RADIUS server in the RAVPN flow.
+#
+# Disabled in Terraform on 2026-04-27 after five OSProvisioningTimedOut
+# failures across ISE 3.3, 3.4, and 3.5 marketplace images, with both
+# default and disabled VM agent configurations, and with both password
+# and SSH key authentication. Azure's ~20 minute platform timeout for
+# OS provisioning fires before the ISE marketplace image's in-guest
+# agent reports ready, no matter what the Terraform create path does.
+# Cisco TAC case notes confirm the same pattern and recommend portal
+# deployment as the workaround until the marketplace image is updated.
+#
+# The ISE VM is now deployed manually through the Azure Portal. See
+# `setup/ise-portal-deploy.md` for the step-by-step. Once the VM is
+# running, it can be imported back into Terraform state with
+# `terraform import module.ise.azurerm_linux_virtual_machine.this <id>`.
+# The module code under `modules/ise/` is preserved unchanged so that
+# import is straightforward when the marketplace image is fixed.
+#
+# When you uncomment this block, also uncomment the matching outputs in
+# outputs.tf.
+#
+# module "ise" {
+#   source = "./modules/ise"
+#
+#   resource_group_name = azurerm_resource_group.this.name
+#   location            = azurerm_resource_group.this.location
+#   subnet_id           = module.network.identity_subnet_id
+#   admin_password      = var.ise_admin_password
+#   dns_domain          = var.ise_dns_domain
+#   image_plan          = var.ise_image_plan
+#   image_version       = var.ise_image_version
+#   tags                = local.common_tags
+# }
 
 # Trading app VM. Ubuntu, nginx, with the React build copied in by the
 # deploy script. Sits on the inside subnet behind the firewall.

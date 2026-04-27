@@ -46,38 +46,49 @@ Each entry has three parts:
 
 **Fix:** Pick something else. The FTDv module uses `cisco` as the Azure-side admin username. The actual FTD admin login (the one you SSH in with) is set by the Day-0 JSON's `AdminPassword` field, which is unrelated to Azure's `admin_username`.
 
-### ISE on Azure: align with Cisco's pattern (user_data + SSH key auth)
+### ISE on Azure: portal-deploy workaround (Terraform path is broken)
 
-**Symptom:** `terraform apply` for the ISE VM fails after ~20 minutes with `OSProvisioningTimedOut: OS Provisioning for VM 'vm-ise' did not finish in the allotted time`.
+**Symptom:** `terraform apply` for the ISE VM fails after exactly 20 minutes with `OSProvisioningTimedOut: OS Provisioning for VM 'vm-ise' did not finish in the allotted time`. This happens on every Cisco ISE marketplace image we tried (3.3, 3.4, 3.5), with every Terraform configuration we tried.
 
-**Diagnosis (after iterating through several false starts):** The reliable path is to match the official `CiscoISE/ciscoise-terraform-automation-azure-nodes` module on three axes simultaneously:
+**Cause:** Azure considers a Linux VM "Succeeded" only after an in-guest provisioning agent (cloud-init / AzureInit / WALA) sends a ready signal back to the platform. Azure waits about 20 minutes for that signal, then marks the resource Failed. The Cisco ISE Azure marketplace image does not ship a cooperating agent in a state Azure recognizes within that window. ISE's own first boot takes 45-60 minutes and the agent never makes it out of bootstrap before Azure gives up.
 
-1. **Bootstrap field is `user_data`, not `custom_data`.** Azure's `azurerm_linux_virtual_machine` has two distinct fields. ISE reads bootstrap from the Azure Instance Metadata Service (which is fed by `user_data`), not from `/var/lib/waagent/CustomData.bin` (which is fed by `custom_data`).
-2. **Underlying Linux auth is SSH key, not password.** Setting `admin_password` plus `disable_password_authentication = false` adds cloud-init work to the boot path that pushes the agent's OS-ready handshake past Azure's ~20 minute timeout. Switching to `admin_ssh_key` with `disable_password_authentication` left at its default (true) is what Cisco's module does.
-3. **Leave `provision_vm_agent` at its default (true).** Disabling the agent was a workaround we tried that masked the wrong symptom.
+Microsoft's marketplace VM FAQ acknowledges this trade-off: "Publishing without an agent may show 'Provisioning failed' in the portal even if the VM runs successfully." Cisco published their ISE image under that trade-off.
 
-The ISE-side admin password (used by the workshop attendee to sign in to the ISE GUI on 443 and the ISE CLI on 22) still comes from `user_data` via `var.admin_password`. ISE has its own auth layer separate from the underlying Linux PAM. The SSH key only protects the Linux iseadmin user during bootstrap.
+**What we tried and observed (five `terraform apply` runs):**
 
-**Fix in code:**
+| Attempt | ISE version | Bootstrap | Auth | VM agent | Outcome |
+|---:|---|---|---|---|---|
+| 1 | 3.5 | `user_data` | password | default (true) | OSProvisioningTimedOut at 20m |
+| 2 | 3.5 | `user_data` | SSH key (RSA 4096) | default (true) | OSProvisioningTimedOut at 20m |
+| 3 | 3.5 | `user_data` | SSH key | `provision_vm_agent = false` | OSProvisioningTimedOut at 20m |
+| 4 | 3.4 | `user_data` | SSH key | default (true) | OSProvisioningTimedOut at 20m |
+| 5 | 3.3 | `user_data` | SSH key | default (true) | OSProvisioningTimedOut at 20m |
 
-```hcl
-admin_ssh_key {
-  username   = "iseadmin"
-  public_key = tls_private_key.this.public_key_openssh
-}
+The pattern is identical across versions and configurations. This is not an ISE-version problem and not an auth-mode problem. Azure's platform timeout fires before the marketplace image's in-guest agent reports ready.
 
-user_data = base64encode(local.user_data)
-# admin_password and disable_password_authentication: do NOT set
-# provision_vm_agent and allow_extension_operations: do NOT set
-```
+**Cisco TAC case-note input:**
 
-Generate the keypair with `tls_private_key.this { algorithm = "RSA"; rsa_bits = 4096 }` (Azure rejects Ed25519 for VM admin keys). Write to `keys/ise_admin{,.pub}` via `local_sensitive_file` and `local_file`. The pattern is the same as the trading app module.
+A Cisco TAC case from another customer surfaced two related items:
 
-**False starts worth recording so the next person doesn't repeat them:**
+- ISE 3.4+ requires `primaryntpserver=` in `user_data`, not the older `ntpserver=`. ISE 3.3 still uses `ntpserver=`. Wrong field name silently fails to parse and leaves NTP unconfigured. This was a bug in our code (now corrected), but it was not the root cause of the deploy timeout.
+- The same customer concluded ISE 3.4 on Azure was not stable enough for production and rolled back to ISE 3.3. We saw the same OSProvisioningTimedOut behavior on 3.3 in our environment, so the version downgrade alone does not solve it for Terraform.
 
-- *Setting `provision_vm_agent = false` with password auth* — works but masks the underlying issue and disables Azure VM Agent capabilities.
-- *Switching to `user_data` while keeping password auth* — still timed out. The `user_data` swap was necessary but not sufficient.
-- *Bumping the VM size to Standard_F16s_v2* — would also work, but requires quota bumps and costs more. Not necessary if the auth method is right.
+**Workaround in this build: deploy ISE through the Azure Portal, then import.**
+
+The Azure Portal's marketplace deployment path appears to handle the OS-provisioning timeout differently. It either uses `--no-wait` semantics behind the scenes or simply tolerates the platform marking the VM Failed during the first boot window. Either way, deploying through the Portal is the documented workaround when the marketplace image's agent timing does not match the platform's timeout.
+
+In this repo:
+
+- The `module "ise"` block in `infra/main.tf` is commented out. The ISE module code under `infra/modules/ise/` is preserved unchanged so the manual VM can be imported back into Terraform later.
+- The `ise_private_ip` and `ise_ssh_key_path` outputs in `infra/outputs.tf` are commented out for the same reason.
+- Step-by-step instructions for the Portal deploy live in `setup/ise-portal-deploy.md`. They include every field value the Portal asks for, including the `user_data` payload that ISE needs.
+- After the Portal-deployed VM is running, you can run `terraform import module.ise.azurerm_linux_virtual_machine.this <vm-id>` to reattach it to state. (You will need to uncomment the module call and outputs first, and the import requires the existing NIC and keypair to be regenerated by the module first.)
+
+**Things to revisit later:**
+
+- Try `az vm create --no-wait` followed by `terraform import` as a fully-CLI alternative to the Portal click-through. This was not tried in this build because the Portal path was sufficient.
+- Watch for a refreshed Cisco marketplace image. If Cisco updates the agent shipping inside the image, the Terraform path may start working without changes.
+- Consider opening a Microsoft Azure support ticket to extend the OS provisioning timeout for marketplace images that have known long first-boot windows.
 
 ### Azure VMs only accept RSA SSH keys
 

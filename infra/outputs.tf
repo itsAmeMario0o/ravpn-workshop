@@ -20,10 +20,16 @@ output "ftdv_mgmt_private_ip" {
   value       = module.ftdv.mgmt_private_ip
 }
 
-output "ise_private_ip" {
-  description = "Private IP of the ISE node. Reach via Bastion."
-  value       = module.ise.private_ip
-}
+# ISE outputs are commented out because ISE is currently deployed via
+# the Azure Portal, not Terraform. See setup/ise-portal-deploy.md.
+# The portal-assigned private IP is 10.100.4.10 by convention - same
+# value the Terraform module would have set. When the module is
+# re-enabled and the VM is imported back into state, uncomment these.
+#
+# output "ise_private_ip" {
+#   description = "Private IP of the ISE node. Reach via Bastion."
+#   value       = module.ise.private_ip
+# }
 
 output "app_private_ip" {
   description = "Private IP of the trading app VM. Reach via Bastion."
@@ -40,7 +46,9 @@ output "app_ssh_key_path" {
   value       = module.app.ssh_private_key_path
 }
 
-output "ise_ssh_key_path" {
-  description = "Local path to the generated SSH private key for the ISE VM (underlying Linux iseadmin user). The ISE GUI still uses the password from terraform.tfvars."
-  value       = module.ise.ssh_private_key_path
-}
+# Commented out alongside ise_private_ip. See note above.
+#
+# output "ise_ssh_key_path" {
+#   description = "Local path to the generated SSH private key for the ISE VM (underlying Linux iseadmin user). The ISE GUI still uses the password from terraform.tfvars."
+#   value       = module.ise.ssh_private_key_path
+# }

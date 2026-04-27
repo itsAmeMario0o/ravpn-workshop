@@ -82,15 +82,22 @@ variable "ftdv_image_version" {
   default     = "latest"
 }
 
-# ISE plan name. 3.5 is current; 3.4 is still published in case you need
-# to match an existing on-prem version for parity.
+# ISE plan name. We pin to cisco-ise_3_3.
+#
+# Why not 3.4 or 3.5: both failed in this build with OSProvisioningTimedOut
+# at exactly the 20-minute mark, with default agent and with agent
+# disabled, with custom_data and with user_data, with password auth and
+# with SSH key auth. Cisco TAC case notes record the same pattern on
+# 3.4 and recommend falling back to 3.3 as the stable path on Azure.
+# Picking the documented stable version is more reliable than chasing
+# workarounds for an image that has known regressions.
 variable "ise_image_plan" {
-  description = "Cisco ISE marketplace plan: cisco-ise_3_4 or cisco-ise_3_5."
+  description = "Cisco ISE marketplace plan: cisco-ise_3_3, cisco-ise_3_4, or cisco-ise_3_5."
   type        = string
-  default     = "cisco-ise_3_5"
+  default     = "cisco-ise_3_3"
   validation {
-    condition     = contains(["cisco-ise_3_4", "cisco-ise_3_5"], var.ise_image_plan)
-    error_message = "Plan must be cisco-ise_3_4 or cisco-ise_3_5."
+    condition     = contains(["cisco-ise_3_3", "cisco-ise_3_4", "cisco-ise_3_5"], var.ise_image_plan)
+    error_message = "Plan must be cisco-ise_3_3, cisco-ise_3_4, or cisco-ise_3_5."
   }
 }
 

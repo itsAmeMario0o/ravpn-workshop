@@ -27,14 +27,16 @@ RG="${RG:-rg-ravpn-demo}"
 
 ok=0
 fail=0
+warns=0
 
 if [[ -t 1 ]]; then
-  green='\033[32m'; red='\033[31m'; reset='\033[0m'
+  green='\033[32m'; yellow='\033[33m'; red='\033[31m'; reset='\033[0m'
 else
-  green=''; red=''; reset=''
+  green=''; yellow=''; red=''; reset=''
 fi
 
 pass() { printf "${green}[OK]${reset}    %s\n" "$1"; ok=$((ok+1)); }
+warn() { printf "${yellow}[WARN]${reset}  %s\n" "$1"; warns=$((warns+1)); }
 miss() { printf "${red}[FAIL]${reset}  %s\n" "$1"; fail=$((fail+1)); }
 
 # 1. Terraform outputs. If terraform apply has not been run, this fails
@@ -42,7 +44,7 @@ miss() { printf "${red}[FAIL]${reset}  %s\n" "$1"; fail=$((fail+1)); }
 cd "${REPO_ROOT}/infra"
 if ! ftdv_ip=$(terraform output -raw ftdv_outside_public_ip 2>/dev/null); then
   miss "terraform output: cannot read ftdv_outside_public_ip. has terraform apply run yet?"
-  printf "\nsummary: %d OK, %d FAIL\n" "${ok}" "${fail}"
+  printf "\nsummary: %d OK, %d WARN, %d FAIL\n" "${ok}" "${warns}" "${fail}"
   exit 1
 fi
 pass "terraform output: ftdv_outside_public_ip=${ftdv_ip}"
@@ -56,7 +58,9 @@ else
   miss "resource group: ${RG} not found in active subscription"
 fi
 
-# 3. VM running state. All three VMs (FTDv, ISE, app) must be running.
+# 3. VM running state. FTDv and the trading app must be running.
+# ISE is checked too, but we tolerate it being absent because the Portal
+# deploy in setup/ise-portal-deploy.md may not have run yet.
 # `az vm get-instance-view` returns the power state under .statuses[1] in
 # practice, but we ask for it via a defined query rather than relying on
 # array indexing.
@@ -73,7 +77,17 @@ check_vm_running() {
   fi
 }
 check_vm_running "vm-ftdv"
-check_vm_running "vm-ise"
+# ISE is portal-deployed; warn rather than fail when it is missing.
+ise_state=$(az vm get-instance-view -g "${RG}" -n "vm-ise" \
+  --query "instanceView.statuses[?starts_with(code, 'PowerState/')].displayStatus | [0]" \
+  -o tsv 2>/dev/null || echo "")
+if [[ "${ise_state}" == "VM running" ]]; then
+  pass "vm vm-ise: running (portal-deployed)"
+elif [[ -z "${ise_state}" ]]; then
+  warn "vm vm-ise: not deployed yet - see setup/ise-portal-deploy.md"
+else
+  miss "vm vm-ise: ${ise_state}"
+fi
 check_vm_running "vm-tradingapp"
 
 # 4. DNS resolution. Both hostnames must resolve to the FTDv outside IP.
@@ -122,7 +136,7 @@ else
 fi
 
 # Summary.
-printf "\nsummary: %d OK, %d FAIL\n" "${ok}" "${fail}"
+printf "\nsummary: %d OK, %d WARN, %d FAIL\n" "${ok}" "${warns}" "${fail}"
 
 if [[ "${fail}" -gt 0 ]]; then
   exit 1

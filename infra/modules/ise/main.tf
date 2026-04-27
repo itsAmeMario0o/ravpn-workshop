@@ -61,6 +61,15 @@ resource "local_file" "public_key" {
 # password, and which APIs to enable. ERS, OpenAPI, and pxGrid are all
 # turned on so ISE can be configured programmatically later.
 locals {
+  # NOTE on the NTP field name: ISE changed the user_data field name
+  # between versions.
+  #  - ISE 3.3 and earlier: `ntpserver=`
+  #  - ISE 3.4 and later:   `primaryntpserver=`
+  # We deploy 3.3, so the older field name is correct. If you bump
+  # `ise_image_plan` to 3.4 or 3.5, change this line to
+  # `primaryntpserver=` or the bootstrap will silently fail to set NTP.
+  # The DNS field name (`primarynameserver=`) is the same across
+  # versions.
   user_data = <<-EOT
     hostname=ise-ravpn
     primarynameserver=168.63.129.16

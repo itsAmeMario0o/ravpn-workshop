@@ -5,11 +5,13 @@ This is the step where Azure resources actually get created. Up until now the bu
 End state of this step:
 
 - Resource group `rg-ravpn-demo` exists in your Azure subscription, region `eastus2`.
-- VNet, subnets, NSGs, public IPs, three VMs (FTDv, ISE, trading app), and Bastion all running.
+- VNet, subnets, NSGs, public IPs, two VMs (FTDv, trading app), and Bastion all running.
 - An SSH keypair for the trading app VM has been generated locally at `keys/ravpn_workshop`.
 - Terraform outputs tell you the FTDv outside public IP so you can update Cloudflare.
 
-Plan ~15-20 minutes from `apply` start to all resources reaching `Succeeded`. ISE is the slow one — its VM provisions quickly, but the ISE software needs another 45-60 minutes to finish first boot before the GUI responds.
+The ISE VM is **not** deployed by Terraform in this build. The `module "ise"` block in `infra/main.tf` is commented out because the Cisco ISE Azure Marketplace image (3.3, 3.4, and 3.5) consistently fails Terraform's create path with `OSProvisioningTimedOut`. ISE is deployed manually through the Azure Portal in the next step. See `setup/ise-portal-deploy.md` and the ISE entry in `LESSONS-LEARNED.md` for the full story.
+
+Plan ~10-15 minutes from `apply` start to all resources reaching `Succeeded`. FTDv is the slow one — its VM provisions in under five minutes, but the FTD software needs another 15-20 minutes to finish first boot before sftunnel registration will succeed.
 
 ## Prerequisites
 
@@ -160,12 +162,10 @@ app_ssh_key_path        = "infra/../keys/ravpn_workshop"
 bastion_name            = "bastion-demo"
 ftdv_mgmt_private_ip    = "10.100.0.10"
 ftdv_outside_public_ip  = "<the new public IP>"
-ise_private_ip          = "10.100.4.10"
-ise_ssh_key_path        = "infra/../keys/ise_admin"
 resource_group_name     = "rg-ravpn-demo"
 ```
 
-The `app_ssh_key_path` and `ise_ssh_key_path` outputs point at private keys generated during apply. You'll find both files in `keys/` at the repo root, mode `600`. Use them with `ssh -i keys/<name> <user>@<private-ip>` once you've opened a Bastion tunnel.
+The `app_ssh_key_path` output points at the private key generated during apply. You'll find it in `keys/` at the repo root, mode `600`. Use it with `ssh -i keys/ravpn_workshop appadmin@<app-private-ip>` once you've opened a Bastion tunnel. The ISE VM is deployed in `setup/ise-portal-deploy.md`; that step generates a separate `keys/ise_admin` SSH keypair for the ISE underlying Linux account.
 
 The `ftdv_outside_public_ip` is what you need for the next step. Pull it as raw value:
 

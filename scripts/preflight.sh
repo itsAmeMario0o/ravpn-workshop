@@ -107,7 +107,11 @@ check_terms() {
   fi
 }
 check_terms "cisco-ftdv-x86-byol" "cisco-ftdv"
-check_terms "cisco-ise_3_5"       "cisco-ise-virtual"
+# ISE is currently deployed via the Azure Portal (see
+# setup/ise-portal-deploy.md). We check 3.3 because that's the version
+# the portal walkthrough recommends, but 3.4 and 3.5 terms are checked
+# too in case the operator deviates.
+check_terms "cisco-ise_3_3"       "cisco-ise-virtual"
 
 # 6. Local toolchain. We do not enforce minimum versions here - the setup
 # guide does that. The point is to surface "you forgot to install X."
