@@ -10,17 +10,41 @@ You do not need to be an expert in any of these products. You do need an Azure s
 
 Follow these in order. Each one ends with a Verify subsection. Do not skip to the next step until Verify passes.
 
+### Phase 1 — Local config (nothing in Azure yet)
+
 1. [Prerequisites](prerequisites.md) - tools and accounts.
 2. [Azure setup](azure-setup.md) - subscription, region, marketplace terms.
-3. [DNS config](dns-config.md) - Cloudflare A records.
-4. [TLS certs](tls-certs.md) - generate two certs locally: the Let's Encrypt identity cert (Cisco Secure Client and the browser see this) and the self-signed application cert (the firewall and the app's nginx use this for backend TLS). Run `scripts/generate-certs.sh` and `scripts/generate-app-cert.sh`.
-5. [Entra ID](entra-config.md) - demo user, MFA, Enterprise App (for ZTAA SAML), App Registration (for ISE REST ID). Also where you download the SAML IdP cert as part of the Federation Metadata XML.
-6. [SCC pre-provisioning](scc-onboarding.md) - create the pending FTDv record in Security Cloud Control, claim Cisco Secure Client Premier alongside TMC, copy the reg key and NAT ID for `terraform.tfvars`, and save the full `configure manager add` command for Phase 4.
-7. [Terraform deploy](terraform-deploy.md) - fill in `terraform.tfvars` with the four sensitive values (FTDv password, ISE password, reg key, NAT ID), run `init`/`plan`/`apply`, read the outputs, update Cloudflare with the real FTDv public IP. Note: Terraform deploys everything except the ISE VM. The ISE module is currently commented out because the Cisco ISE Marketplace image fails Terraform's create path with `OSProvisioningTimedOut`. ISE is deployed manually via the Portal in step 8.
-8. [ISE Portal deploy](ise-portal-deploy.md) - click-through deploy of the Cisco ISE Marketplace image through the Azure Portal. Takes 10 minutes of clicks plus 45-60 minutes of first-boot wait.
-9. [cdFMC registration](cdFMC-registration.md) - SSH to FTDv through Bastion and run the `configure manager add` command from step 6. After registration, upload all three certs to cdFMC: identity cert (Devices > Certificates, PKCS12), SAML IdP cert (Devices > Certificates, Manual + CA Only), application cert (Objects > PKI > Internal Certs).
-10. [ISE config](ise-config.md) - REST ID identity store, FTDv as a network access device, auth and authz policies.
-11. Trading app deploy - run `scripts/deploy-trading-app.sh` to build the React app and push it (along with the local application cert) to the VM.
+3. [DNS config](dns-config.md) - Cloudflare A records (placeholder IP for now).
+4. [TLS certs](tls-certs.md) - generate two certs locally: the Let's Encrypt identity cert and the self-signed application cert.
+5. [Entra ID](entra-config.md) - demo user, MFA, Enterprise App, App Registration.
+6. [SCC pre-provisioning](scc-onboarding.md) - create the pending FTDv record, claim licenses, save the reg key, NAT ID, and full `configure manager add` command.
+
+### Phase 2 — Provision the platform (Azure resources come up)
+
+7. [Terraform deploy](terraform-deploy.md) - VNet, subnets, FTDv, trading app, Bastion. Update Cloudflare A records with the real FTDv outside IP after apply finishes. Note: ISE is **not** deployed by Terraform — the ISE module is commented out because the Cisco ISE Marketplace image fails Terraform's create path with `OSProvisioningTimedOut`. See `LESSONS-LEARNED.md`.
+8. [ISE Portal deploy](ise-portal-deploy.md) - click-through deploy of ISE through the Azure Portal. Takes 10 minutes of clicks plus 45-60 minutes of first-boot wait. Verify with `show application status ise` over Bastion.
+
+### Phase 3 — Configure the security stack (the parts that depend on each other)
+
+9. [cdFMC registration](cdFMC-registration.md) - SSH to FTDv through Bastion, run `configure network management-data-interface`, then paste the `configure manager add ...` command from step 6. Wait for FTDv to appear as healthy in cdFMC inventory.
+10. [ISE config](ise-config.md) - in the ISE GUI: enable REST Auth Service, create the REST ID identity source pointing at Entra, add the FTDv as a Network Access Device (write down the RADIUS shared secret), build the policy set. Skip the FTDv-side Verify step at the end of this guide for now — it depends on cdFMC RAVPN config that comes after step 11.
+11. Upload certs to cdFMC - identity cert (Devices > Certificates as PKCS12), SAML IdP cert (Devices > Certificates, Manual + CA Only), application cert (Objects > PKI > Internal Certs). Reference table in `tls-certs.md`.
+
+### Phase 4 — RAVPN end-to-end
+
+12. cdFMC RAVPN configuration - AAA server group pointing at ISE (10.100.4.10) using the shared secret from step 10, RAVPN connection profile, address pool, group policy, IPv4 access list, identity cert binding, deploy.
+13. Trading app deploy - run `scripts/deploy-trading-app.sh` to build the React app and push it (along with the local application cert) to the VM. Both the `/vpn` and `/ztaa` routes need to be live before any end-to-end test.
+14. Verify RAVPN - back to the ISE-config Verify step (`test aaa-server` from FTDv CLI through Bastion). Then from a laptop with Cisco Secure Client, connect to `vpn.rooez.com` as `trader1@rooez.com`. The dark `/vpn` dashboard loads.
+
+### Phase 5 — ZTAA end-to-end
+
+15. cdFMC ZTAA configuration - SAML IdP setup, Application Group with identity + application certs, per-app policy, deploy.
+16. Verify ZTAA - browser to `https://trading.rooez.com/ztaa`, redirected to Entra ID, prompt for MFA, return to the light `/ztaa` dashboard.
+
+### Phase 6 — Sign-off
+
+17. cdFMC dashboard check - the active RAVPN session is visible with username, source IP, geographic location, Secure Client version.
+18. Run `scripts/smoke-test.sh` - all green except the items that intentionally cannot be programmatically verified (Secure Client connect, ZTAA redirect).
 
 ## Things that will trip you up
 

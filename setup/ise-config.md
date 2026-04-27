@@ -6,12 +6,20 @@ There are three things to configure: the identity store that points at Entra, th
 
 ## Before you start
 
-- ISE has finished its first boot. This takes 45 to 60 minutes after `terraform apply`. You can tell because the web UI starts responding.
-- The Entra App Registration exists and you have the tenant ID, client ID, and client secret saved. See [entra-config.md](entra-config.md).
-- FTDv is registered to cdFMC.
-- The Bastion script works.
+For steps 1-5 (configuring ISE itself):
 
-A note on auth methods. The underlying Linux `iseadmin` user is protected by an SSH key generated at apply time (saved at `keys/ise_admin`). You only need that key if you SSH directly to ISE on port 22 to manage the underlying OS — uncommon for a workshop. The **ISE web UI** on port 443 and the **ISE CLI** (different from the underlying Linux shell) both use the password you set in `ise_admin_password` in `terraform.tfvars`. That's the password you sign in with as `iseadmin` in this guide.
+- ISE has finished its first boot. The Portal walkthrough (`setup/ise-portal-deploy.md`) ends with a `show application status ise` check — every non-disabled service should be in `running` state before you start here.
+- The Entra App Registration exists and you have the tenant ID, client ID, and client secret saved. See [entra-config.md](entra-config.md).
+- The Bastion script works (`setup/bastion-access.md`).
+
+For the **Verify** step at the end (testing RADIUS end-to-end):
+
+- FTDv is registered to cdFMC.
+- The cdFMC AAA server group for ISE is configured (this happens during RAVPN setup, after this guide).
+
+Steps 1-5 do not depend on FTDv being registered. Do them now. The Verify step uses `test aaa-server` from the FTDv CLI, which only becomes useful after the firewall has the ISE shared secret configured through cdFMC. Come back and run Verify after `setup/cdFMC-registration.md` is done and the RAVPN AAA group is built.
+
+A note on auth methods. The underlying Linux `iseadmin` user is protected by an SSH key (saved at `keys/ise_admin` from the Portal-deploy step). You only need that key if you SSH directly to ISE on port 22 to manage the underlying OS — uncommon for a workshop. The **ISE web UI** on port 443 and the **ISE CLI** (different from the underlying Linux shell) both use the password you set in `ise_admin_password` in `terraform.tfvars`. That's the password you sign in with as `iseadmin` in this guide.
 
 ## 1. Reach the ISE web UI
 
@@ -29,7 +37,24 @@ https://127.0.0.1:50443
 
 Accept the cert warning (ISE's self-signed cert is fine for the demo). Sign in as `iseadmin` with the password you set in `ise_admin_password`.
 
-## 2. Create the REST ID identity store
+## 2. Enable REST Auth Service
+
+ISE has a feature called **REST Auth Service** that powers REST-based identity sources. If you run `show application status ise` from the ISE CLI, this service shows as `disabled` by default. The bootstrap fields we passed in user_data (`ersapi=yes`, `openapi=yes`, `pxGrid=yes`) cover three other APIs but **not** REST Auth Service. It has to be turned on in the GUI before the REST identity source we create in step 3 will work.
+
+In the ISE GUI:
+
+**Administration > System > Settings > Protocols > REST Auth Service**
+
+Set:
+
+- **Enable REST Auth Service:** toggle to **on**
+- Save
+
+After save, ISE restarts the REST Auth Service in the background. This takes about a minute. To confirm it came up, run `show application status ise` again from the CLI — `REST Auth Service` should now read `running`.
+
+If you do not enable this first, the **Test Connection** button in step 3 will fail with a generic "REST service unavailable" error and you will spend a long time looking at Entra config that is not the problem.
+
+## 3. Create the REST ID identity store
 
 This is the bridge between ISE and Entra ID.
 
@@ -52,7 +77,7 @@ In the REST settings, run a test against `trader1@rooez.com` with the user's pas
 
 If this fails, ISE auth will fail. Stop here and fix it.
 
-## 3. Add FTDv as a Network Access Device
+## 4. Add FTDv as a Network Access Device
 
 ISE only accepts RADIUS from devices it knows about.
 
@@ -65,7 +90,7 @@ ISE only accepts RADIUS from devices it knows about.
 
 Save the shared secret somewhere safe. cdFMC needs the same string when you create the AAA server group.
 
-## 4. Build the policy set
+## 5. Build the policy set
 
 **Policy > Policy Sets**, create a new policy set named `RAVPN-Demo`.
 
