@@ -30,6 +30,10 @@ Follow these in order. Each one ends with a Verify subsection. Do not skip to th
 - **The `[AppGroupName]` placeholder.** ZTAA uses SAML between Entra and cdFMC. The Entity ID and ACS URL contain the literal string `[AppGroupName]`. Replace that string with the same value in both Entra and cdFMC before you test.
 - **Three certs, three sources, three upload paths.** ZTAA needs an identity cert (Let's Encrypt, public CA), a SAML IdP cert (downloaded from Entra inside the Federation Metadata XML), and an application cert (self-signed, generated locally). Each lands in a different cdFMC location. See `tls-certs.md` for the table.
 
+## Reference
+
+- [Bastion access](bastion-access.md) - how to reach FTDv, ISE, and the trading app through Azure Bastion. Read this before step 9 if you have not used Bastion before.
+
 ## Optional add-ons
 
 - [Extending ZTAA to additional applications](ztaa-extensions.md) - the same zero-trust pattern works for ISE's admin GUI and any other internal HTTPS app. Includes the generic flow and a worked example for ISE.
