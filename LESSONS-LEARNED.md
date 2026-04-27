@@ -90,6 +90,36 @@ In this repo:
 - Watch for a refreshed Cisco marketplace image. If Cisco updates the agent shipping inside the image, the Terraform path may start working without changes.
 - Consider opening a Microsoft Azure support ticket to extend the OS provisioning timeout for marketplace images that have known long first-boot windows.
 
+**Proposed Terraform restructure (saved for future work):**
+
+After the Portal deploy succeeded, we exported the ARM template and parameters Cisco's marketplace listing actually used. Reviewing those files surfaced two concrete reasons the Terraform path failed and Portal succeeded.
+
+*Why Portal works and our Terraform did not:* Cisco's marketplace flow wraps the VM creation inside a `Microsoft.Resources/deployments` ARM template. ARM marks the deployment Succeeded the moment the VM resource is created and started, without waiting for the in-guest OS to finish provisioning. The same OSProvisioningTimedOut still happens at the VM level around 20 minutes, but the deployment wrapper does not poll for it, so the Portal shows green and the VM finishes booting in the background. Our `azurerm_linux_virtual_machine.this` resource polls the VM's own provisioning state and aborts the moment Azure reports `Failed`. Same image, same fields, different polling contract.
+
+*What Cisco's user_data has that ours did not:* the exported deployment record shows the user_data Cisco built actually contains a `username=iseadmin` line that ours never had. Field order also differs (Cisco: `hostname → dnsdomain → primarynameserver → ntpserver → timezone → username → password → services`). Time zone is `Etc/UTC` in Cisco's, plain `UTC` in ours. The image version is pinned to `3.3.430` rather than `latest`. None of these on its own is proven to be the root cause, but `username=iseadmin` is the most likely missing piece because ISE's bootstrap reads it.
+
+*The proposed restructure has two layers, in priority order:*
+
+1. **Switch `infra/modules/ise/main.tf` from `azurerm_linux_virtual_machine` to `azurerm_resource_group_template_deployment`.** Drop Cisco's exported `template.json` into `infra/modules/ise/arm/template.json` and have Terraform deploy it through the same ARM mechanism the Portal uses. This makes Terraform's polling behavior match the Portal's: deployment success when the VM is started, not when the OS is ready. This is the structural fix and is officially supported by the azurerm provider.
+2. **Even if we keep `azurerm_linux_virtual_machine` instead, fix the user_data.** Add `username=iseadmin`, reorder fields to match Cisco's exact sequence, switch `timezone=` to `Etc/UTC`, and pin `image_version` in `infra/variables.tf` to `3.3.430` rather than `latest`. This is the cheap test that may unlock the direct-VM path on its own.
+
+*Files that would change:*
+
+- `infra/modules/ise/arm/template.json` — copy of Cisco's exported template (new file)
+- `infra/modules/ise/main.tf` — replace the VM resource with `azurerm_resource_group_template_deployment` referencing the local template; build the parameters object from existing module variables
+- `infra/modules/ise/outputs.tf` — read the VM ID from the deployment's `output_content` instead of from the VM resource directly
+- `infra/main.tf` — uncomment the `module "ise"` block once the new approach is committed and verified
+- `infra/outputs.tf` — uncomment the `ise_private_ip` and `ise_ssh_key_path` outputs once the module is back in service
+- `setup/ise-portal-deploy.md` — keep as a reference even after the Terraform fix lands, in case the marketplace template ever changes again
+
+*Risks worth flagging before doing this work:*
+
+- ARM-template deployments are harder to drift-detect. Terraform sees the template as an opaque blob and only knows whether deployment succeeded, not whether the resulting VM matches expectations. We accept that trade-off because the alternative is no Terraform at all for ISE.
+- Cisco may publish a new template with breaking parameter changes. The `template.json` we export today is pinned to the marketplace version `cisco.cisco-ise-solutioncisco-ise_3_3` we deployed. A future Cisco update might require pulling a new export.
+- If we use `azurerm_resource_group_template_deployment`, importing the existing Portal-deployed VM into Terraform state becomes harder. The path of least resistance is to destroy the Portal-deployed VM after the Terraform restructure is ready and let Terraform create a fresh one through the ARM template. Plan a maintenance window for that swap.
+
+*The exported templates themselves live outside the repo.* They contain SSH public-key material that is fine in git, but they are generic ARM exports tied to a specific deployment instance, not a generalized module. The `*.zip` rule in `.gitignore` keeps them out. If you need them for the restructure work, they were saved at the repo root as `ExportedTemplate-cisco.cisco-ise-solution-*.zip` and `Deployment-cisco.cisco-ise-solution-*.zip`.
+
 ### Azure VMs only accept RSA SSH keys
 
 **Symptom:** `terraform apply` fails creating a Linux VM with `the provided ssh-ed25519 SSH key is not supported. Only RSA SSH keys are supported by Azure`.
