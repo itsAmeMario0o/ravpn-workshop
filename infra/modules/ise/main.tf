@@ -67,7 +67,12 @@ resource "azurerm_linux_virtual_machine" "this" {
   # terraform create even though ISE is still booting normally. Disabling
   # the VM agent skips that check. We don't use the agent for anything -
   # Bastion is our admin path, not Azure VM extensions.
-  provision_vm_agent = false
+  #
+  # The azurerm provider requires allow_extension_operations = false
+  # whenever provision_vm_agent = false (the two must be set together).
+  # No impact: extensions need the agent to run anyway.
+  provision_vm_agent         = false
+  allow_extension_operations = false
 
   network_interface_ids = [azurerm_network_interface.this.id]
 

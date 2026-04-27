@@ -52,7 +52,7 @@ Each entry has three parts:
 
 **Cause:** Azure has an internal timeout (~20 min) for the VM Agent to report "OS ready." ISE first boot takes 45-60 minutes — the underlying VM is fine, the OS is just slow to finish its bootstrap script. The Azure Agent never gets a chance to report ready before the timeout fires, so Azure marks the create as failed and Terraform sees the error.
 
-**Fix:** Set `provision_vm_agent = false` on the ISE VM resource. Without the VM Agent, Azure skips the "OS ready" check entirely. We don't lose anything that matters — Bastion is our admin path, and we don't use any Azure VM extensions on ISE. The Cisco ISE Azure deploy guide recommends this setting for the same reason.
+**Fix:** Set `provision_vm_agent = false` on the ISE VM resource. **You must also set `allow_extension_operations = false`** — the azurerm provider rejects `allow_extension_operations = true` (the default) whenever `provision_vm_agent = false`. The two must be set together. No functional impact; extensions can't run without the agent anyway. The Cisco ISE Azure deploy guide recommends both for the same reason.
 
 ### Azure VMs only accept RSA SSH keys
 
