@@ -62,6 +62,13 @@ resource "azurerm_linux_virtual_machine" "this" {
 
   disable_password_authentication = false
 
+  # ISE first boot takes 45-60 minutes. Azure's VM Agent check times out
+  # at ~20 min and triggers OSProvisioningTimedOut, which fails the
+  # terraform create even though ISE is still booting normally. Disabling
+  # the VM agent skips that check. We don't use the agent for anything -
+  # Bastion is our admin path, not Azure VM extensions.
+  provision_vm_agent = false
+
   network_interface_ids = [azurerm_network_interface.this.id]
 
   custom_data = base64encode(local.user_data)

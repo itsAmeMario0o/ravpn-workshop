@@ -10,7 +10,7 @@ set -euo pipefail
 # What it checks:
 #   1. Azure CLI is signed in.
 #   2. The active subscription is set.
-#   3. Regional vCPU quota is enough for the three demo VMs (13 vCPU total).
+#   3. Regional vCPU quota is enough for the three demo VMs (17 vCPU total).
 #   4. Per-family quota for DSv3 (FTDv), DSv4 (ISE), and BS (app).
 #   5. Marketplace terms accepted for FTD 10 and ISE 3.5.
 #   6. Local toolchain present (terraform, node, certbot, openssl, jq).
@@ -33,7 +33,7 @@ set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 LOCATION="${LOCATION:-eastus2}"
-EXPECTED_TOTAL_VCPU=13  # FTDv 4 (D4s_v3, FTDv5 tier) + ISE 8 (D8s_v4) + app 1 (B1s)
+EXPECTED_TOTAL_VCPU=17  # FTDv 8 (D8s_v3, smallest 4-NIC size) + ISE 8 (D8s_v4) + app 1 (B1s)
 
 # Counters for the summary line at the end.
 ok=0
@@ -90,7 +90,7 @@ check_family() {
     pass "${family} cap in ${LOCATION}: ${limit} (need >= ${need})"
   fi
 }
-check_family "standardDSv3Family" 4
+check_family "standardDSv3Family" 8
 check_family "standardDSv4Family" 8
 check_family "standardBSFamily"   1
 

@@ -15,8 +15,12 @@
 # so a 1 vCPU / 1 GB RAM VM is plenty.
 
 # SSH keypair for the trading app VM. Generated at apply time so users
-# don't have to bring their own. The Ed25519 algorithm is the modern
-# default - faster, smaller, more secure than RSA.
+# don't have to bring their own.
+#
+# Algorithm note: Azure's azurerm_linux_virtual_machine.admin_ssh_key
+# accepts RSA keys only. Ed25519 is rejected with "Only RSA SSH keys
+# are supported by Azure." So we use RSA 4096 - the secure modern default
+# for RSA keys.
 #
 # Both files land at the repo root in keys/. The directory is gitignored.
 # After apply, you can SSH with: ssh -i keys/ravpn_workshop appadmin@<ip>
@@ -25,7 +29,8 @@
 # a workshop on a personal laptop, that's acceptable. For production you
 # would use Azure Key Vault or a Vault provider instead.
 resource "tls_private_key" "this" {
-  algorithm = "ED25519"
+  algorithm = "RSA"
+  rsa_bits  = 4096
 }
 
 resource "local_sensitive_file" "private_key" {

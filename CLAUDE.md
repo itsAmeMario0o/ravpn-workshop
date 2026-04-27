@@ -39,7 +39,7 @@ Internet
 +----------------------------------------------------------------------+
 |  Azure VNet: 10.100.0.0/16                                           |
 |                                                                       |
-|  FTDv (Standard_D4s_v3, 4 vCPU, 16 GB, FTDv5 tier)                  |
+|  FTDv (Standard_D8s_v3, 8 vCPU, 32 GB, FTDv5 tier)                  |
 |    Nic0: management  10.100.0.10  private only (Bastion + sftunnel)  |
 |    Nic1: diagnostic   10.100.1.10                                     |
 |    Nic2: outside      10.100.2.10  pip-ftdv-outside (RAVPN + ZTAA)   |
@@ -76,7 +76,7 @@ Internet
 
 | Component | Role | Key detail |
 |---|---|---|
-| FTDv | Firewall, RAVPN termination, ZTAA enforcement | FTD 10.x on Standard_D4s_v3 (matches FTDv5 tier sizing). Day-0 bootstrap via Custom Data JSON. Registered to cdFMC through SCC. |
+| FTDv | Firewall, RAVPN termination, ZTAA enforcement | FTD 10.x on Standard_D8s_v3 (smallest Dsv3 size that supports the 4 NICs FTDv requires). Day-0 bootstrap via Custom Data JSON. Registered to cdFMC through SCC. |
 | cdFMC | Centralized management | SaaS via Security Cloud Control. All FTD policy config happens here. |
 | ISEv | RADIUS server for RAVPN | PSN-only (Extra Small). REST ID identity source pointing to Entra ID. Validates credentials via ROPC. |
 | Azure Bastion | Secure admin access | Standard SKU. SSH tunnel to ISE and FTD management. No jump host VM needed. |

@@ -16,7 +16,7 @@ Each entry has three parts:
 
 **Symptom:** `terraform apply` fails partway through with a quota error mentioning "regional cores," even though the per-family quotas (DSv3, DSv4, BS) look like they have plenty of headroom.
 
-**Cause:** Azure has two layers of quota in the same region. Per-family caps say "you can have N vCPUs of this VM family." A separate **Total Regional vCPUs** cap says "across every family combined, no more than N vCPUs." The default for a new subscription is 10. This demo needs 13 (FTDv 4 on D4s_v3 + ISE 8 on D8s_v4 + app 1 on B1s).
+**Cause:** Azure has two layers of quota in the same region. Per-family caps say "you can have N vCPUs of this VM family." A separate **Total Regional vCPUs** cap says "across every family combined, no more than N vCPUs." The default for a new subscription is 10. This demo needs 17 (FTDv 8 on D8s_v3 + ISE 8 on D8s_v4 + app 1 on B1s).
 
 **Fix:** Request a quota increase via the Azure portal (Subscriptions > your subscription > Usage + quotas > filter to your region > "Total Regional vCPUs"). Ask for at least 24 to give yourself headroom. Approval is usually quick on default-tier subscriptions.
 
@@ -30,6 +30,14 @@ Each entry has three parts:
 
 **Fix:** Run `az vm image terms accept` for the exact plan name in `infra/variables.tf`. Today that's `cisco-ftdv-x86-byol` for FTDv and `cisco-ise_3_5` for ISE. If you switch the SKU, accept the new terms before re-running apply.
 
+### Azure VM size dictates max NIC count, not just vCPU/RAM
+
+**Symptom:** `terraform apply` fails creating the FTDv VM with `NetworkInterfaceCountExceeded: The number of network interfaces is 4 and the maximum allowed is 2`.
+
+**Cause:** Azure caps the number of NICs you can attach based on the VM **size**, not the family. FTDv needs four NICs (mgmt, diagnostic, outside, inside) regardless of license tier. In the Dsv3 family, NIC limits are: D2s_v3 = 2, D4s_v3 = 2, D8s_v3 = 4, D16s_v3 = 8. In the Fsv2 family: F2s_v2 = 2, F4s_v2 = 2, F8s_v2 = 4, F16s_v2 = 8. Cisco's FTDv tier sizing tables only mention vCPU and RAM, so it's easy to "right-size" to FTDv5's 4 vCPU recommendation and end up with a VM size that won't take the four NICs.
+
+**Fix:** Use Standard_D8s_v3 (smallest Dsv3 size supporting 4 NICs) or Standard_F8s_v2 (smallest Fsv2 size supporting 4 NICs) for FTDv on Azure, regardless of the FTDv performance tier license you've claimed. The "extra" CPU/RAM is wasted on the FTDv5 license tier but Azure forces the size.
+
 ### "admin" is a reserved username on Azure VMs
 
 **Symptom:** `terraform validate` succeeds, but `terraform apply` fails immediately with a long error listing reserved usernames including "admin", "administrator", "user", and a few dozen others.
@@ -37,6 +45,22 @@ Each entry has three parts:
 **Cause:** Azure refuses to provision a VM with `admin_username` set to common values that attackers spray.
 
 **Fix:** Pick something else. The FTDv module uses `cisco` as the Azure-side admin username. The actual FTD admin login (the one you SSH in with) is set by the Day-0 JSON's `AdminPassword` field, which is unrelated to Azure's `admin_username`.
+
+### ISE first boot blows past Azure's OS provisioning timeout
+
+**Symptom:** `terraform apply` for the ISE VM fails after ~20 minutes with `OSProvisioningTimedOut: OS Provisioning for VM 'vm-ise' did not finish in the allotted time`. The error message itself notes "The VM may still finish provisioning successfully."
+
+**Cause:** Azure has an internal timeout (~20 min) for the VM Agent to report "OS ready." ISE first boot takes 45-60 minutes — the underlying VM is fine, the OS is just slow to finish its bootstrap script. The Azure Agent never gets a chance to report ready before the timeout fires, so Azure marks the create as failed and Terraform sees the error.
+
+**Fix:** Set `provision_vm_agent = false` on the ISE VM resource. Without the VM Agent, Azure skips the "OS ready" check entirely. We don't lose anything that matters — Bastion is our admin path, and we don't use any Azure VM extensions on ISE. The Cisco ISE Azure deploy guide recommends this setting for the same reason.
+
+### Azure VMs only accept RSA SSH keys
+
+**Symptom:** `terraform apply` fails creating a Linux VM with `the provided ssh-ed25519 SSH key is not supported. Only RSA SSH keys are supported by Azure`.
+
+**Cause:** Azure's `azurerm_linux_virtual_machine.admin_ssh_key` field accepts RSA keys only. Ed25519 (which is the modern default for SSH key generation everywhere else) is rejected even though OpenSSH supports it. Microsoft has talked about adding Ed25519 support but it's not GA at the time of this build.
+
+**Fix:** When generating an SSH key for an Azure VM via the `tls` provider, use `algorithm = "RSA"` with `rsa_bits = 4096`. Ed25519 works fine for connecting OUT of Azure VMs (e.g., outbound git SSH) — only the admin key on the VM itself has to be RSA.
 
 ### `AzureBastionSubnet` is a hard name requirement
 
