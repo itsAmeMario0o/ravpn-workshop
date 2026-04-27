@@ -66,10 +66,12 @@ scripts/bastion-tunnel.sh ftdv 50022
 
 ```bash
 # Terminal 2
-ssh -p 50022 cisco@127.0.0.1
+ssh -p 50022 admin@127.0.0.1
 ```
 
 You'll be prompted for the FTDv admin password (`ftdv_admin_password` in `terraform.tfvars`). You land at the FTD CLI prompt (`>`). This is where you paste the `configure manager add ...` command from SCC, covered in `cdFMC-registration.md`.
+
+Use `admin`, not `cisco`. Our Terraform module sets the Azure-side `admin_username` to `cisco` because Azure reserves the literal username `admin` for VM creation. SSH as `cisco` lands at the FX-OS Linux shell, where FTD commands do not exist and sudoers will not let you switch to `admin`. SSH as `admin` (the FTD-internal user, configured by Day-0 JSON's `AdminPassword`) lands at the FTD CLI directly. See the FTDv entry in `LESSONS-LEARNED.md` for the full story.
 
 ### Trading app VM — SSH on 22
 
@@ -106,7 +108,7 @@ The browser session is shell-only. To reach ISE's web GUI, you still need the Me
 |---|---|---|---|
 | ISE GUI | 50443 | `ISE_PORT=443 scripts/bastion-tunnel.sh ise 50443` | `open https://127.0.0.1:50443` |
 | ISE CLI | 50022 | `scripts/bastion-tunnel.sh ise 50022` | `ssh -i keys/ise_admin -p 50022 iseadmin@127.0.0.1` |
-| FTDv CLI | 50022 | `scripts/bastion-tunnel.sh ftdv 50022` | `ssh -p 50022 cisco@127.0.0.1` (password) |
+| FTDv CLI | 50022 | `scripts/bastion-tunnel.sh ftdv 50022` | `ssh -p 50022 admin@127.0.0.1` (password) |
 | Trading app | 50022 | `scripts/bastion-tunnel.sh app 50022` | `ssh -i keys/ravpn_workshop -p 50022 appadmin@127.0.0.1` |
 
 ## Things that go wrong

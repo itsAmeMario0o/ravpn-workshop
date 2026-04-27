@@ -140,6 +140,27 @@ After the Portal deploy succeeded, we exported the ARM template and parameters C
 
 ## FTDv and Cisco
 
+### SSH to FTDv as `admin`, not the Azure-side `cisco` user
+
+**Symptom:** SSH to FTDv through Bastion as `cisco` lands at a Linux bash prompt that looks like `vm-ftdv:~$`. FTD commands like `show version` or `configure manager add` fail with `-sh: show: command not found`. `connect ftd` returns `command not found`. `sudo su - admin` is rejected with `Sorry, user cisco is not allowed to execute '/bin/su - admin' as root`.
+
+**Cause:** FTDv has two separate admin identities, and they answer to different SSH paths:
+
+- **`cisco`** — the Linux-side admin we set as `admin_username` in the Terraform module (because Azure reserves the literal username `admin` for VM creation). Logging in as `cisco` lands at the FX-OS / Linux expert-mode shell. This is a real Linux account on the underlying chassis OS, not the FTD application admin. FTD-side commands do not exist here, sudoers does not let `cisco` su to `admin`, and `connect ftd` is not a valid command in this build.
+- **`admin`** — the FTD application admin, configured by the Day-0 JSON's `AdminPassword` field at first boot. Logging in as `admin` over the same SSH listener lands directly at the FTD CLI `>` prompt. All FTD configuration commands work here.
+
+The FTDv image creates `admin` internally during bootstrap. Azure's reserved-username rule applies only to creating VMs, not to logging in to existing accounts inside the guest, so SSH as `admin` works fine.
+
+**Fix:** Always SSH to FTDv as `admin`:
+
+```bash
+ssh -p 50022 admin@127.0.0.1
+```
+
+The password is the value of `ftdv_admin_password` in `terraform.tfvars` (same value Day-0 JSON used to set the FTD admin password). The Terraform module's `admin_username = "cisco"` only affects the Linux-side account; it does not change FTD's internal `admin` user.
+
+`scripts/bastion-tunnel.sh` and `setup/bastion-access.md` were updated to show `admin@127.0.0.1` instead of `cisco@127.0.0.1` for FTDv. The `cisco` user can still be used to reach the underlying Linux shell on the rare occasions you need FX-OS-level diagnostics.
+
 ### FTD 10 publishes under a new marketplace SKU
 
 **Symptom:** You search the Azure marketplace for "Cisco FTDv 10" and find only 7.x versions. The 10.x deployment guide says to use a different plan name than what you find under the old SKU.

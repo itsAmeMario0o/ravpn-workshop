@@ -37,10 +37,12 @@ Leave that terminal open. It holds the tunnel.
 In a second terminal:
 
 ```bash
-ssh -p 50022 cisco@127.0.0.1
+ssh -p 50022 admin@127.0.0.1
 ```
 
 The password is whatever you set in `ftdv_admin_password`. You land at the FTD CLI, recognizable by the `>` prompt. This is not a Linux shell — most Linux commands do not work here.
+
+**Important: SSH as `admin`, not `cisco`.** Our Terraform module sets the Azure-side `admin_username` to `cisco` because Azure reserves the literal username `admin` for VM creation. SSH as `cisco` lands at the FX-OS / Linux shell where FTD commands do not exist and sudoers will not let you switch to `admin`. SSH as `admin` (the FTD-internal user, set by Day-0 JSON) lands at the FTD CLI `>` directly. If you accidentally tried `cisco` first and reused local port `50022` from a prior ISE tunnel, you may also need to clear the cached host key with `ssh-keygen -R "[127.0.0.1]:50022"` before the new SSH session will accept FTDv's host key. See the FTDv entry in `LESSONS-LEARNED.md` for the full story.
 
 ## 4. Configure data-interface management
 
