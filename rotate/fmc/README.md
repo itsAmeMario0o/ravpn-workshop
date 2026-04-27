@@ -15,11 +15,20 @@ For FMC web UI users:
 - **Web UI:** `System > Users > Users`. Edit the user, set a new password, save.
 - **Configuration Guide:** [Cisco — User Accounts for FMC](https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/management-center/admin/710/management-center-admin-71/system-users.html)
 
-For the FMC CLI admin (a separate account from the web UI admin):
+For the **default built-in `admin`** CLI user:
 
-- **CLI command:** `configure password` from the FMC shell. Note that web UI and CLI admin passwords are tracked separately, so a rotation in one does not propagate to the other.
+- **CLI command:** `configure password` from the FMC shell. The default `admin` cannot be moved to external authentication — it's hardcoded as a local account. Web UI and CLI admin passwords are tracked separately, so rotating one does not propagate to the other.
 
-Neither of these is automatable via REST. You can drive the web UI with a browser-automation tool like Selenium or Playwright, but that's brittle and not what most environments mean by "API rotation."
+Neither web UI nor CLI for the default `admin` is automatable via REST.
+
+For **additional CLI users beyond the default `admin`**, FMC does support external authentication for shell access via LDAP or RADIUS. This is often missed because most documentation focuses on the default admin behavior. Specifically:
+
+- **LDAP for CLI access** uses a search filter on the External Authentication object to identify which LDAP users get shell access.
+- **RADIUS for CLI access** requires you to pre-list the eligible usernames in the External Authentication object (RADIUS doesn't have a directory you can query, so FMC needs the explicit list).
+- Only one External Authentication object can be designated for CLI/shell at a time, even though multiple objects can serve the web UI.
+- The shell-access CLI users land on FMC's restricted shell. From there, the `expert` command escalates to a full Linux shell, which is why this is a sensitive privilege; review the role mapping carefully.
+
+Once external auth is configured for CLI, those users' passwords live in the external IdP and rotation happens there using `../azure-ad/`. **The default `admin` is the only CLI account that genuinely has to be rotated manually.**
 
 ## The recommended path
 
@@ -35,19 +44,23 @@ Once external auth is in place, the FMC has no copy of the password — it forwa
 
 ## When this might not be enough
 
-A handful of FMC accounts can't be moved to external auth:
+A small number of FMC accounts genuinely can't be moved to external auth:
 
-- The **CLI admin** account on the FMC virtual or hardware appliance. CLI access doesn't honor LDAP/RADIUS in most FMC versions.
-- The **web UI emergency admin** if your policy requires a break-glass local account.
+- The **default built-in `admin`** account, both web UI side and CLI side. These are always local; they can't be migrated to LDAP/RADIUS/SAML in any FMC version.
+- The **web UI emergency admin** if your policy requires a separate break-glass local account.
 
-For these, manual rotation via the FMC GUI or CLI is the only path. Schedule them on your operational calendar (e.g., quarterly) and document the rotation in a runbook, since automation isn't available.
+For these, manual rotation via the FMC GUI (`System > Users > Users`) or CLI (`configure password`) is the only path. Schedule them on your operational calendar (e.g., quarterly) and document the rotation in a runbook, since automation isn't available.
+
+**Other CLI users** (not the default admin) can be external. If your operational pattern is "everyone who SSHes to FMC has a personal account in AD or RADIUS," that's supported and rotation lives in the IdP via `../azure-ad/`. The key is configuring the External Authentication object with the right CLI-access settings (LDAP filter or RADIUS user list).
 
 ## Summary
 
 | Scenario | Rotation path |
 |---|---|
-| FMC service account used by API automation | Move to LDAP/RADIUS, rotate the IdP account via `../azure-ad/` |
+| FMC service account used by API automation | Move to LDAP/RADIUS for web access, rotate the IdP account via `../azure-ad/` |
 | FMC web UI human admin tied to AD | Already in IdP; rotate via `../azure-ad/` |
 | FMC web UI break-glass local admin | Manual via GUI |
-| FMC CLI admin | Manual via `configure password` |
+| **FMC default built-in `admin` (web)** | Manual via GUI — cannot be made external |
+| **FMC default built-in `admin` (CLI)** | Manual via `configure password` — cannot be made external |
+| **Additional FMC CLI users (not the default admin)** | LDAP filter or RADIUS user list, then rotate the IdP account via `../azure-ad/` |
 | FTD local user | Same as FMC; managed through FMC |
