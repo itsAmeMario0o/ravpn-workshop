@@ -46,13 +46,20 @@ Each entry has three parts:
 
 **Fix:** Pick something else. The FTDv module uses `cisco` as the Azure-side admin username. The actual FTD admin login (the one you SSH in with) is set by the Day-0 JSON's `AdminPassword` field, which is unrelated to Azure's `admin_username`.
 
-### ISE first boot blows past Azure's OS provisioning timeout
+### ISE on Azure reads bootstrap from `user_data`, not `custom_data`
 
-**Symptom:** `terraform apply` for the ISE VM fails after ~20 minutes with `OSProvisioningTimedOut: OS Provisioning for VM 'vm-ise' did not finish in the allotted time`. The error message itself notes "The VM may still finish provisioning successfully."
+**Symptom:** `terraform apply` for the ISE VM fails after ~20 minutes with `OSProvisioningTimedOut: OS Provisioning for VM 'vm-ise' did not finish in the allotted time`.
 
-**Cause:** Azure has an internal timeout (~20 min) for the VM Agent to report "OS ready." ISE first boot takes 45-60 minutes — the underlying VM is fine, the OS is just slow to finish its bootstrap script. The Azure Agent never gets a chance to report ready before the timeout fires, so Azure marks the create as failed and Terraform sees the error.
+**Cause (corrected after reviewing the official CiscoISE/ciscoise-terraform-automation-azure-nodes module):** Azure's `azurerm_linux_virtual_machine` has two separate fields for passing bootstrap data:
 
-**Fix:** Set `provision_vm_agent = false` on the ISE VM resource. **You must also set `allow_extension_operations = false`** — the azurerm provider rejects `allow_extension_operations = true` (the default) whenever `provision_vm_agent = false`. The two must be set together. No functional impact; extensions can't run without the agent anyway. The Cisco ISE Azure deploy guide recommends both for the same reason.
+- `custom_data` — exposed inside the VM at `/var/lib/waagent/CustomData.bin` via the Azure VM Agent. Read once at boot by cloud-init.
+- `user_data` — exposed via the Azure Instance Metadata Service (IMDS) at a runtime URL. Available throughout the VM lifetime.
+
+Cisco ISE on Azure reads its bootstrap config (hostname, admin password, DNS, NTP, ERS/OpenAPI/pxGrid toggles) from **user_data**, not custom_data. Feeding the same content via custom_data leaves ISE without any of its config — it boots with defaults, fails to come up correctly, and the Azure Agent never reports OS-ready. At ~20 minutes Azure's standard provisioning timeout fires and Terraform sees `OSProvisioningTimedOut`.
+
+This was misdiagnosed initially as "ISE bootstrap is too slow for Azure's timeout." The Cisco-official module uses default `provision_vm_agent = true` and works fine — the agent reports ready well within 20 minutes when the OS comes up. The slow piece is ISE's application bootstrap (45-60 minutes), which happens after agent-ready and doesn't block the Terraform create.
+
+**Fix:** Use `user_data = base64encode(local.user_data)` instead of `custom_data` on the ISE VM. Leave `provision_vm_agent` and `allow_extension_operations` at their defaults (true). The earlier band-aid of setting both to false was treating the wrong root cause.
 
 ### Azure VMs only accept RSA SSH keys
 

@@ -62,21 +62,17 @@ resource "azurerm_linux_virtual_machine" "this" {
 
   disable_password_authentication = false
 
-  # ISE first boot takes 45-60 minutes. Azure's VM Agent check times out
-  # at ~20 min and triggers OSProvisioningTimedOut, which fails the
-  # terraform create even though ISE is still booting normally. Disabling
-  # the VM agent skips that check. We don't use the agent for anything -
-  # Bastion is our admin path, not Azure VM extensions.
-  #
-  # The azurerm provider requires allow_extension_operations = false
-  # whenever provision_vm_agent = false (the two must be set together).
-  # No impact: extensions need the agent to run anyway.
-  provision_vm_agent         = false
-  allow_extension_operations = false
-
   network_interface_ids = [azurerm_network_interface.this.id]
 
-  custom_data = base64encode(local.user_data)
+  # ISE on Azure reads its bootstrap config from user_data (exposed via
+  # the Azure Instance Metadata Service), not custom_data (exposed via
+  # the Azure VM Agent at /var/lib/waagent/CustomData.bin). This matches
+  # the official CiscoISE/ciscoise-terraform-automation-azure-nodes
+  # module. Using custom_data instead causes ISE to never see the
+  # hostname, admin password, DNS, NTP, etc., which manifests as
+  # OSProvisioningTimedOut at 20 minutes because the agent never reports
+  # ready - ISE is stalled waiting for config that never arrives.
+  user_data = base64encode(local.user_data)
 
   os_disk {
     caching              = "ReadWrite"
