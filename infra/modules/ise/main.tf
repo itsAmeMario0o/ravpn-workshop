@@ -14,6 +14,48 @@
 # that window; trying to reach the GUI before it finishes returns a
 # certificate error or a connection refusal.
 
+# SSH keypair for the ISE VM.
+#
+# Why generated, not provided: the official Cisco Terraform automation
+# module for ISE on Azure uses SSH key authentication (not password) for
+# the underlying Linux iseadmin user. Aligning with that pattern matters
+# because password-based auth pushes more cloud-init work onto the boot
+# path, and that extra work has been observed to push past Azure's ~20
+# minute OS-provisioning timeout - which manifests as
+# OSProvisioningTimedOut at terraform apply.
+#
+# Algorithm: RSA 4096. Azure VMs reject Ed25519 keys for the admin user
+# even though OpenSSH supports them.
+#
+# What this key does and does not do:
+#  - It DOES protect SSH access to the underlying Linux OS as the iseadmin
+#    user. If you bastion-tunnel to ISE on port 22 you authenticate with
+#    this key, not a password.
+#  - It does NOT change how a workshop attendee signs in to ISE. The ISE
+#    GUI on port 443 and the ISE-style CLI both use the password from
+#    user_data (var.admin_password). That's a separate auth layer.
+#
+# Files land in keys/ at the repo root, mode 600 (private) and 644
+# (public). The directory is gitignored.
+resource "tls_private_key" "this" {
+  algorithm = "RSA"
+  rsa_bits  = 4096
+}
+
+resource "local_sensitive_file" "private_key" {
+  content              = tls_private_key.this.private_key_openssh
+  filename             = "${path.root}/../keys/ise_admin"
+  file_permission      = "0600"
+  directory_permission = "0700"
+}
+
+resource "local_file" "public_key" {
+  content              = tls_private_key.this.public_key_openssh
+  filename             = "${path.root}/../keys/ise_admin.pub"
+  file_permission      = "0644"
+  directory_permission = "0700"
+}
+
 # User data is plaintext key=value pairs, base64-encoded. ISE reads this
 # at first boot and uses it for hostname, DNS, NTP, timezone, the admin
 # password, and which APIs to enable. ERS, OpenAPI, and pxGrid are all
@@ -58,20 +100,24 @@ resource "azurerm_linux_virtual_machine" "this" {
   resource_group_name = var.resource_group_name
   size                = var.vm_size
   admin_username      = "iseadmin"
-  admin_password      = var.admin_password
 
-  disable_password_authentication = false
+  # SSH key auth on the underlying Linux iseadmin user. Matches the
+  # official Cisco Terraform automation pattern. Password auth is left
+  # at its default (disabled) - var.admin_password is still used, but
+  # only inside user_data for the ISE-side admin (GUI and ISE CLI),
+  # not for the underlying Linux account.
+  admin_ssh_key {
+    username   = "iseadmin"
+    public_key = tls_private_key.this.public_key_openssh
+  }
 
   network_interface_ids = [azurerm_network_interface.this.id]
 
   # ISE on Azure reads its bootstrap config from user_data (exposed via
-  # the Azure Instance Metadata Service), not custom_data (exposed via
-  # the Azure VM Agent at /var/lib/waagent/CustomData.bin). This matches
+  # the Azure Instance Metadata Service), not custom_data. This matches
   # the official CiscoISE/ciscoise-terraform-automation-azure-nodes
-  # module. Using custom_data instead causes ISE to never see the
-  # hostname, admin password, DNS, NTP, etc., which manifests as
-  # OSProvisioningTimedOut at 20 minutes because the agent never reports
-  # ready - ISE is stalled waiting for config that never arrives.
+  # module. The bootstrap config sets the ISE admin password, hostname,
+  # DNS, NTP, and which APIs to enable.
   user_data = base64encode(local.user_data)
 
   os_disk {

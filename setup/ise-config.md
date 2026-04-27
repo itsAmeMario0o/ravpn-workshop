@@ -11,6 +11,8 @@ There are three things to configure: the identity store that points at Entra, th
 - FTDv is registered to cdFMC.
 - The Bastion script works.
 
+A note on auth methods. The underlying Linux `iseadmin` user is protected by an SSH key generated at apply time (saved at `keys/ise_admin`). You only need that key if you SSH directly to ISE on port 22 to manage the underlying OS — uncommon for a workshop. The **ISE web UI** on port 443 and the **ISE CLI** (different from the underlying Linux shell) both use the password you set in `ise_admin_password` in `terraform.tfvars`. That's the password you sign in with as `iseadmin` in this guide.
+
 ## 1. Reach the ISE web UI
 
 ISE serves its UI on port 443 of its private IP. Tunnel through Bastion:

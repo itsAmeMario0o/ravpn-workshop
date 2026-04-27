@@ -39,3 +39,8 @@ output "app_ssh_key_path" {
   description = "Local path to the generated SSH private key for the trading app VM. Use with: ssh -i <path> appadmin@<app_private_ip>."
   value       = module.app.ssh_private_key_path
 }
+
+output "ise_ssh_key_path" {
+  description = "Local path to the generated SSH private key for the ISE VM (underlying Linux iseadmin user). The ISE GUI still uses the password from terraform.tfvars."
+  value       = module.ise.ssh_private_key_path
+}

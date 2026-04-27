@@ -46,20 +46,38 @@ Each entry has three parts:
 
 **Fix:** Pick something else. The FTDv module uses `cisco` as the Azure-side admin username. The actual FTD admin login (the one you SSH in with) is set by the Day-0 JSON's `AdminPassword` field, which is unrelated to Azure's `admin_username`.
 
-### ISE on Azure reads bootstrap from `user_data`, not `custom_data`
+### ISE on Azure: align with Cisco's pattern (user_data + SSH key auth)
 
 **Symptom:** `terraform apply` for the ISE VM fails after ~20 minutes with `OSProvisioningTimedOut: OS Provisioning for VM 'vm-ise' did not finish in the allotted time`.
 
-**Cause (corrected after reviewing the official CiscoISE/ciscoise-terraform-automation-azure-nodes module):** Azure's `azurerm_linux_virtual_machine` has two separate fields for passing bootstrap data:
+**Diagnosis (after iterating through several false starts):** The reliable path is to match the official `CiscoISE/ciscoise-terraform-automation-azure-nodes` module on three axes simultaneously:
 
-- `custom_data` — exposed inside the VM at `/var/lib/waagent/CustomData.bin` via the Azure VM Agent. Read once at boot by cloud-init.
-- `user_data` — exposed via the Azure Instance Metadata Service (IMDS) at a runtime URL. Available throughout the VM lifetime.
+1. **Bootstrap field is `user_data`, not `custom_data`.** Azure's `azurerm_linux_virtual_machine` has two distinct fields. ISE reads bootstrap from the Azure Instance Metadata Service (which is fed by `user_data`), not from `/var/lib/waagent/CustomData.bin` (which is fed by `custom_data`).
+2. **Underlying Linux auth is SSH key, not password.** Setting `admin_password` plus `disable_password_authentication = false` adds cloud-init work to the boot path that pushes the agent's OS-ready handshake past Azure's ~20 minute timeout. Switching to `admin_ssh_key` with `disable_password_authentication` left at its default (true) is what Cisco's module does.
+3. **Leave `provision_vm_agent` at its default (true).** Disabling the agent was a workaround we tried that masked the wrong symptom.
 
-Cisco ISE on Azure reads its bootstrap config (hostname, admin password, DNS, NTP, ERS/OpenAPI/pxGrid toggles) from **user_data**, not custom_data. Feeding the same content via custom_data leaves ISE without any of its config — it boots with defaults, fails to come up correctly, and the Azure Agent never reports OS-ready. At ~20 minutes Azure's standard provisioning timeout fires and Terraform sees `OSProvisioningTimedOut`.
+The ISE-side admin password (used by the workshop attendee to sign in to the ISE GUI on 443 and the ISE CLI on 22) still comes from `user_data` via `var.admin_password`. ISE has its own auth layer separate from the underlying Linux PAM. The SSH key only protects the Linux iseadmin user during bootstrap.
 
-This was misdiagnosed initially as "ISE bootstrap is too slow for Azure's timeout." The Cisco-official module uses default `provision_vm_agent = true` and works fine — the agent reports ready well within 20 minutes when the OS comes up. The slow piece is ISE's application bootstrap (45-60 minutes), which happens after agent-ready and doesn't block the Terraform create.
+**Fix in code:**
 
-**Fix:** Use `user_data = base64encode(local.user_data)` instead of `custom_data` on the ISE VM. Leave `provision_vm_agent` and `allow_extension_operations` at their defaults (true). The earlier band-aid of setting both to false was treating the wrong root cause.
+```hcl
+admin_ssh_key {
+  username   = "iseadmin"
+  public_key = tls_private_key.this.public_key_openssh
+}
+
+user_data = base64encode(local.user_data)
+# admin_password and disable_password_authentication: do NOT set
+# provision_vm_agent and allow_extension_operations: do NOT set
+```
+
+Generate the keypair with `tls_private_key.this { algorithm = "RSA"; rsa_bits = 4096 }` (Azure rejects Ed25519 for VM admin keys). Write to `keys/ise_admin{,.pub}` via `local_sensitive_file` and `local_file`. The pattern is the same as the trading app module.
+
+**False starts worth recording so the next person doesn't repeat them:**
+
+- *Setting `provision_vm_agent = false` with password auth* — works but masks the underlying issue and disables Azure VM Agent capabilities.
+- *Switching to `user_data` while keeping password auth* — still timed out. The `user_data` swap was necessary but not sufficient.
+- *Bumping the VM size to Standard_F16s_v2* — would also work, but requires quota bumps and costs more. Not necessary if the auth method is right.
 
 ### Azure VMs only accept RSA SSH keys
 

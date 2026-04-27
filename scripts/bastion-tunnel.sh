@@ -16,8 +16,10 @@ set -euo pipefail
 #   scripts/bastion-tunnel.sh ise 50443     # tunnel ISE GUI to 127.0.0.1:50443
 #
 # Then in another terminal:
-#   ssh -p 50022 admin@127.0.0.1
-#   open https://127.0.0.1:50443
+#   ssh -p 50022 cisco@127.0.0.1                            # FTDv (uses password from terraform.tfvars)
+#   ssh -i keys/ise_admin -p 50022 iseadmin@127.0.0.1       # ISE underlying Linux (SSH key)
+#   ssh -i keys/ravpn_workshop -p 50022 appadmin@127.0.0.1  # trading app VM (SSH key)
+#   open https://127.0.0.1:50443                             # ISE GUI (sign in with password)
 
 RG="${RG:-rg-ravpn-demo}"
 BASTION="${BASTION:-bastion-demo}"

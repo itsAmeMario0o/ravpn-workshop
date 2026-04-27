@@ -78,7 +78,7 @@ Internet
 |---|---|---|
 | FTDv | Firewall, RAVPN termination, ZTAA enforcement | FTD 10.x on Standard_D8s_v3 (smallest Dsv3 size that supports the 4 NICs FTDv requires). Day-0 bootstrap via Custom Data JSON. Registered to cdFMC through SCC. |
 | cdFMC | Centralized management | SaaS via Security Cloud Control. All FTD policy config happens here. |
-| ISEv | RADIUS server for RAVPN | PSN-only (Extra Small). REST ID identity source pointing to Entra ID. Validates credentials via ROPC. |
+| ISEv | RADIUS server for RAVPN | PSN-only (Extra Small) on Standard_D8s_v4. SSH key auth on the underlying Linux iseadmin user (matches Cisco's official Terraform pattern); ISE GUI and ISE CLI use the password from `terraform.tfvars`. REST ID identity source pointing to Entra ID. Validates credentials via ROPC. |
 | Azure Bastion | Secure admin access | Standard SKU. SSH tunnel to ISE and FTD management. No jump host VM needed. |
 | Entra ID | Identity provider | SAML IdP for ZTAA (with MFA). OAuth ROPC target for ISE REST ID. Free with Azure subscription. |
 | Trading App | Demo target application | React/Vite SPA on Ubuntu B1s. Dark theme at `/vpn`, light theme at `/ztaa`. Nginx reverse proxy. |

@@ -161,8 +161,11 @@ bastion_name            = "bastion-demo"
 ftdv_mgmt_private_ip    = "10.100.0.10"
 ftdv_outside_public_ip  = "<the new public IP>"
 ise_private_ip          = "10.100.4.10"
+ise_ssh_key_path        = "infra/../keys/ise_admin"
 resource_group_name     = "rg-ravpn-demo"
 ```
+
+The `app_ssh_key_path` and `ise_ssh_key_path` outputs point at private keys generated during apply. You'll find both files in `keys/` at the repo root, mode `600`. Use them with `ssh -i keys/<name> <user>@<private-ip>` once you've opened a Bastion tunnel.
 
 The `ftdv_outside_public_ip` is what you need for the next step. Pull it as raw value:
 
