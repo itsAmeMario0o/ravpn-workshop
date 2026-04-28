@@ -140,6 +140,26 @@ After the Portal deploy succeeded, we exported the ARM template and parameters C
 
 ## FTDv and Cisco
 
+### Don't pre-seed cdFMC registration in Day-0 JSON — register at the point of configuration
+
+**Symptom:** Day-0 JSON includes `FmcIp` (set to `DONTRESOLVE`), `FmcRegKey`, and `FmcNatId`. FTDv first boot picks these up, attempts sftunnel registration, fails because management has no Internet egress, and gets stuck in `Registration: Pending`. Even after fixing the path (running `configure network management-data-interface` to send management traffic out the outside data interface), the pending registration never completes. Running `configure manager delete` and re-adding with the same values from `terraform.tfvars` also stays Pending.
+
+**Cause:** Two compounding issues:
+
+1. **Day-0 fires before any data interface is configured.** When the FTD VM first boots, Day-0 reads `FmcIp`/`FmcRegKey`/`FmcNatId` and immediately tries to register. At that moment, management is on its own subnet (`10.100.0.0/24`) which has no Internet egress in our architecture (no NAT gateway, no public IP on the management NIC by design). So sftunnel can't reach SCC. Registration goes to `Pending` and the SCC pre-provision record marks the reg key/NAT ID as "in use" by an attempt.
+2. **SCC reg keys are effectively one-shot once an attempt is made.** Even after we restored connectivity (via `configure network management-data-interface`), feeding the same reg key and NAT ID back through `configure manager add` did not complete the registration. SCC had already associated those values with the failed attempt and would not accept them again. The only way out was to **re-issue the registration token in SCC** (which generates a new reg key and NAT ID for the same pending device record), then run `configure manager delete` + `configure manager add` with the new values.
+
+**Fix at the operational level:** registration is a step you do **after** the FTD is reachable, not at first boot.
+
+1. After `terraform apply`, SSH to FTDv via Bastion as `admin`.
+2. Convert management interface from DHCP to manual (`configure network ipv4 manual 10.100.0.10 255.255.255.0 10.100.0.1`) — same values Azure was already handing it.
+3. Run `configure network management-data-interface` and answer the prompts (interface `Ethernet0/1`, name `outside`, manual IP `10.100.2.10`, netmask `255.255.255.0`, gateway `10.100.2.1`). This is the step that gives FTD an Internet path.
+4. **Re-issue the registration token in SCC** for the pending device record. Copy the new `configure manager add ...` line.
+5. On FTD: `configure manager delete`, then paste the new `configure manager add` line.
+6. Watch `show managers` for `Pending → Completed` (typically 3-5 min).
+
+**Proposed Terraform change (not done yet, saved for later):** remove `FmcIp`/`FmcRegKey`/`FmcNatId` from the Day-0 JSON in `infra/modules/ftdv/main.tf`. Pre-seeding adds no value because the values get consumed by a failure that always happens at first boot, and we have to re-issue + manually register anyway. Cleaner Day-0 = `AdminPassword`, `Hostname`, `ManageLocally=No`, `Diagnostic=OFF` only. The reg key and NAT ID stay in `terraform.tfvars` for documentation/automation hooks but are not baked into the VM. Operator runs `configure manager add` manually as documented in `setup/cdFMC-registration.md`. Files to change when this work is picked up: `infra/modules/ftdv/main.tf` (drop the three FMC fields from the Day-0 local), `infra/modules/ftdv/variables.tf` (mark `reg_key` and `nat_id` as no-longer-required, or remove them entirely), and `infra/main.tf` (matching arg removal). The setup walkthrough in `setup/cdFMC-registration.md` already reflects the manual flow.
+
 ### SSH to FTDv as `admin`, not the Azure-side `cisco` user
 
 **Symptom:** SSH to FTDv through Bastion as `cisco` lands at a Linux bash prompt that looks like `vm-ftdv:~$`. FTD commands like `show version` or `configure manager add` fail with `-sh: show: command not found`. `connect ftd` returns `command not found`. `sudo su - admin` is rejected with `Sorry, user cisco is not allowed to execute '/bin/su - admin' as root`.
