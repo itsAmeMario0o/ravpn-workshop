@@ -10,6 +10,31 @@ ZTAA on FTD needs three different certs. They serve different purposes and come 
 
 The rest of this guide focuses on the identity cert (Let's Encrypt) and the application cert (self-signed). The IdP cert is handled in [entra-config.md](entra-config.md).
 
+## How to think about these three certs
+
+Each cert proves something different to a different audience. If you keep that in mind, the rest of the cert work is just plumbing.
+
+**Identity cert** says: "I am `vpn.rooez.com` and `trading.rooez.com`."
+- Audience: every browser and Secure Client that connects to FTD's outside interface.
+- Trust requirement: must chain to a CA the audience already trusts. This is why we use Let's Encrypt — every browser and OS ships with the Let's Encrypt root in its trust store.
+- Skip it and: every connection gets a TLS warning. Demo-able, but not what we want.
+
+**SAML IdP cert** says: "this SAML assertion really came from Entra."
+- Audience: just FTD, during the ZTAA login flow.
+- Trust requirement: FTD needs Entra's public signing cert, so it can verify the signature on the SAML assertion. Entra signs with its private key, FTD verifies with the public key bundled in the metadata XML.
+- Skip it and: anyone could forge a SAML assertion. Signing is what makes the SSO flow safe.
+
+**Application cert** says: "I am the trading app server."
+- Audience: just FTD, on the inside leg when it re-encrypts traffic to the app.
+- Trust requirement: closed loop between FTD and one server inside the VNet. No public trust needed. Self-signed is fine because nobody outside this VNet ever sees it.
+- Skip it and: FTD can't speak HTTPS to the app. ZTAA assumes the protected app is HTTPS.
+
+Two-line mental model:
+- **Outside-facing** (RAVPN clients, ZTAA browsers) → public CA → Let's Encrypt.
+- **Inside-facing** (FTD trusting Entra, FTD reaching the app) → private trust → metadata-embedded cert + self-signed.
+
+For the **RAVPN demo specifically**, only the identity cert is required. The SAML IdP cert and the application cert come into play during the ZTAA demo. We still generate all three up front because the wildcard Let's Encrypt cert covers both `vpn` and `trading` subdomains, and the app cert needs to be on the trading app VM before nginx starts.
+
 ## Identity cert: Let's Encrypt
 
 We use a Let's Encrypt wildcard SAN cert covering `rooez.com` and `*.rooez.com`. One cert covers every subdomain you might add later (`vpn`, `trading`, `ise`, anything else), so you do not have to re-issue when you ZTAA-enable a new app. Let's Encrypt verifies that you control the domain through a DNS-01 challenge: they ask for a specific TXT record, certbot adds it via the Cloudflare API, Let's Encrypt sees it, and issues the cert. You do not need a public IP or a web server for this. The validation is entirely DNS-based.
@@ -76,6 +101,23 @@ Expected: a date roughly 90 days from now.
 ### Renewal and rate limits
 
 The Let's Encrypt cert lasts 90 days. For a one-day workshop this is fine. If the demo runs longer than expected, re-run `generate-certs.sh` to renew. Production-tier issuance is rate-limited to 5 per week per registered domain — that's why we always validate against staging first.
+
+### Package the cert as PKCS12 for cdFMC
+
+cdFMC's identity cert import expects a PKCS12 bundle, not loose PEM files. PKCS12 (`.p12`) is a single password-protected file that holds the cert, the issuing chain, and the private key together. Build it from the three Let's Encrypt outputs:
+
+```bash
+openssl pkcs12 -export \
+  -inkey  certs/config/live/ravpn-demo/privkey.pem \
+  -in     certs/config/live/ravpn-demo/cert.pem \
+  -certfile certs/config/live/ravpn-demo/chain.pem \
+  -name   ravpn-identity \
+  -out    certs/config/live/ravpn-demo/ravpn-identity.p12
+```
+
+You'll be prompted for an export password. Pick a strong one and save it in your password manager — cdFMC asks for the same password when you import the bundle. Lose this password and you have to rebuild the `.p12`.
+
+The `-name ravpn-identity` flag sets the friendly name embedded in the bundle. cdFMC shows that name in the cert list, so use something a future you will recognize.
 
 ## Application cert: self-signed
 
