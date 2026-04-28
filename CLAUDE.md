@@ -348,7 +348,7 @@ Skill IDs use the form `<plugin>:<skill>`. Bare names (e.g., `humanizer`, `simpl
 - `engineering-skills` and `engineering-advanced-skills` (from `alirezarezvani/claude-skills`)
 - `sales-skills` (from `louisblythe/Sales-Skills`)
 
-The two `alirezarezvani/claude-skills` plugins ship with a broken `plugin.json` (`"skills": "./"`). The local manifests have been patched to enumerate each skill. If `/plugin marketplace update` is run, re-apply the same patch — the script lives at `scripts/fix-claude-skills-plugins.sh` (or the inline Python under `~/.claude/`).
+The two `alirezarezvani/claude-skills` plugins ship with a broken `plugin.json` (`"skills": "./"`). The local manifests have been patched to enumerate each skill. If `/plugin marketplace update` is run, re-apply the same patch via the inline Python under `~/.claude/`.
 
 ### Coding mindset (apply throughout)
 
