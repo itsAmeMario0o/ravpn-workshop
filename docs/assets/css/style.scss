@@ -121,6 +121,10 @@ body {
   padding: 0;
   margin: 0;
 }
+/* Override the global "li + li { margin-top }" rule that is meant for
+   prose lists. Without this, the second nav item onward gets pushed
+   ~5px lower than the first, so "Overview" sits higher than the rest. */
+.primary-nav li { margin: 0; }
 .primary-nav a {
   display: inline-block;
   padding: 0.5rem 0.85rem;
