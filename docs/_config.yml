@@ -1,0 +1,64 @@
+# Jekyll site configuration for the RAVPN Workshop documentation.
+# Build runs in CI through .github/workflows/pages.yaml.
+
+title: RAVPN Workshop
+description: >-
+  Azure-hosted demo environment for Cisco FTDv remote access VPN, geolocation
+  policy, Zero Trust Application Access, and cdFMC management.
+author: Mario Ruiz
+
+# baseurl is the path the site is served from on github.io.
+# For https://<user>.github.io/ravpn-workshop/ this must be "/ravpn-workshop".
+# If you map a custom domain through CNAME, set baseurl to "".
+baseurl: "/ravpn-workshop"
+url: ""
+
+markdown: kramdown
+kramdown:
+  syntax_highlighter: rouge
+  input: GFM
+  hard_wrap: false
+
+permalink: pretty
+
+# No external theme. Layouts live in _layouts/, styles in assets/css/.
+theme: null
+
+plugins:
+  - jekyll-seo-tag
+  - jekyll-sitemap
+
+# Ordered nav rendered by _includes/nav.html.
+nav:
+  - title: Overview
+    url: /
+  - title: Architecture
+    url: /architecture/
+  - title: Demos
+    url: /demos/
+  - title: Setup
+    url: /setup/
+  - title: Scripts
+    url: /scripts/
+  - title: Teardown
+    url: /teardown/
+
+# Repo metadata used in the footer and "edit on GitHub" links.
+repo:
+  owner: itsAmeMario0o
+  name: ravpn-workshop
+  branch: main
+
+defaults:
+  - scope:
+      path: ""
+      type: pages
+    values:
+      layout: default
+
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - vendor/
+  - .bundle/
+  - README.md
