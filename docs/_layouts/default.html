@@ -25,12 +25,6 @@
         {% endif %}
 
         {{ content }}
-
-        <footer class="page-footer">
-          {% if site.repo %}
-            <a class="edit-link" href="https://github.com/{{ site.repo.owner }}/{{ site.repo.name }}/edit/{{ site.repo.branch }}/docs/{{ page.path | remove_first: 'docs/' }}">Edit this page on GitHub</a>
-          {% endif %}
-        </footer>
       </article>
     </main>
 
