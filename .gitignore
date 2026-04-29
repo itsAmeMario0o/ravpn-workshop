@@ -63,3 +63,7 @@ docs/.jekyll-metadata
 docs/.bundle/
 docs/vendor/
 docs/Gemfile.lock
+
+# Personal demo runbook (stays local, never published)
+demo-runbook.md
+demo-runbook.pdf
