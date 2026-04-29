@@ -54,20 +54,20 @@ Internet
    v
 +----------------------------------------------------------------------+
 |  Azure Virtual Network: 10.100.0.0/16                                |
-|                                                                       |
-|  Firewall (FTDv)                                                      |
-|    Connection 0 (admin)        10.100.0.10  private                  |
+|                                                                      |
+|  Firewall (FTDv)                                                     |
+|    Connection 0 (admin)        10.100.0.10   private                 |
 |    Connection 1 (diagnostic)   10.100.1.10                           |
-|    Connection 2 (outside)      10.100.2.10  public IP                |
+|    Connection 2 (outside)      10.100.2.10   public IP               |
 |    Connection 3 (inside)       10.100.3.10                           |
-|                                                                       |
+|                                                                      |
 |  Trading dashboard server (Ubuntu)                                   |
-|    10.100.3.20                                                        |
+|    10.100.3.20                                                       |
 |    Two pages: /vpn (dark theme), /ztaa (light theme)                 |
-|                                                                       |
+|                                                                      |
 |  Identity middleman (Cisco ISE)                                      |
-|    10.100.4.10                                                        |
-|                                                                       |
+|    10.100.4.10                                                       |
+|                                                                      |
 |  Secure side door (Azure Bastion)                                    |
 |    Browser-based access for admins. No public IPs on the firewall    |
 |    admin connection or the identity server.                          |

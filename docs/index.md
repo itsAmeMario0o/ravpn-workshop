@@ -2,6 +2,10 @@
 layout: default
 title: RAVPN Workshop
 permalink: /
+# Suppress the standard page-header. The hero section below renders the
+# H1 and lede on the home page, so the layout's page-header would only
+# duplicate them.
+hide_page_header: true
 ---
 
 <section class="hero">

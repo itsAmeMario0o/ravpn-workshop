@@ -16,7 +16,7 @@
 
     <main class="page">
       <article class="prose">
-        {% if page.title %}
+        {% if page.title and page.hide_page_header != true %}
           <header class="page-header">
             <p class="eyebrow">{{ page.eyebrow | default: "Documentation" }}</p>
             <h1>{{ page.title }}</h1>
